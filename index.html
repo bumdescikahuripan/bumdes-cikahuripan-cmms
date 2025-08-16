@@ -1,0 +1,3257 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan CMMS BUMDes Cikahuripan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="gradient-bg text-white shadow-lg">
+        <div class="container mx-auto px-6 py-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold">BUMDes Cikahuripan</h1>
+                    <p class="text-blue-100 mt-2">Sistem Laporan CMMS - Computerized Maintenance Management System</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm text-blue-100">Periode Laporan</p>
+                    <p class="text-xl font-semibold" id="currentDate"></p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">🔐 Login Sistem CMMS</h2>
+            <form onsubmit="handleLogin(event)">
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Username</label>
+                    <input type="text" id="username" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Password</label>
+                    <input type="password" id="password" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+                </div>
+                <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                    Login
+                </button>
+            </form>
+            <div class="mt-4 text-sm text-gray-600">
+                <p><strong>Demo Akun:</strong></p>
+                <p>Direktur: direktur / admin123</p>
+                <p>Unit Internet: internet / unit123</p>
+                <p>Unit Toko: toko / unit123</p>
+                <p>Unit Kios: kios / unit123</p>
+                <p>Unit Lapak: lapak / unit123</p>
+                <p>Unit Lapangan: lapangan / unit123</p>
+                <p>Unit Sampah: sampah / unit123</p>
+                <p>Unit Ayam: ayam / unit123</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-6 py-8" id="mainContent" style="display: none;">
+        <!-- User Info & Logout -->
+        <div class="bg-white rounded-xl shadow-md p-4 mb-6 flex justify-between items-center">
+            <div>
+                <p class="text-sm text-gray-600">Login sebagai:</p>
+                <p class="font-semibold text-gray-800" id="userInfo"></p>
+            </div>
+            <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                🚪 Logout
+            </button>
+        </div>
+
+        <!-- Navigation Menu -->
+        <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">📊 Menu Sistem</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="navigationMenu">
+                <!-- Menu akan diisi berdasarkan role user -->
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div id="contentArea">
+            
+            <!-- Form Input Laporan Harian -->
+            <div id="inputForm" class="unit-content hidden">
+                <!-- Tab Navigation -->
+                <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                    <div class="flex border-b mb-6 overflow-x-auto">
+                        <button onclick="switchTab('daily')" id="dailyTab" class="px-6 py-3 font-medium text-blue-600 border-b-2 border-blue-600 whitespace-nowrap">
+                            📅 Laporan Harian
+                        </button>
+                        <button onclick="switchTab('asset')" id="assetTab" class="px-6 py-3 font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap">
+                            🛒 Pembelian Aset
+                        </button>
+                        <button onclick="switchTab('coa')" id="coaTab" class="px-6 py-3 font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap">
+                            📚 COA Unit
+                        </button>
+                        <button onclick="switchTab('kasumum')" id="kasumumTab" class="px-6 py-3 font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap">
+                            🏦 Kas Umum
+                        </button>
+                        <button onclick="switchTab('shu')" id="shuTab" class="px-6 py-3 font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap">
+                            💰 Pembagian SHU
+                        </button>
+                        <button onclick="switchTab('monthly')" id="monthlyTab" class="px-6 py-3 font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap">
+                            📊 Laporan Bulanan
+                        </button>
+                        <button onclick="switchTab('history')" id="historyTab" class="px-6 py-3 font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap">
+                            📋 Riwayat Laporan
+                        </button>
+                    </div>
+
+                    <!-- COA Form -->
+                    <div id="coaForm" class="tab-content hidden">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4" id="coaFormTitle">📚 Chart of Accounts (COA) Unit</h3>
+                        
+                        <div class="bg-blue-50 p-4 rounded-lg mb-6">
+                            <h4 class="font-semibold text-blue-800 mb-2">💡 Tentang COA Unit</h4>
+                            <p class="text-sm text-blue-700">
+                                Chart of Accounts (COA) adalah daftar akun keuangan yang digunakan untuk mencatat transaksi. 
+                                Setiap unit memiliki COA khusus sesuai jenis usahanya untuk memudahkan pencatatan dan pelaporan.
+                            </p>
+                        </div>
+
+                        <div id="coaDisplay">
+                            <!-- COA akan ditampilkan di sini berdasarkan unit -->
+                        </div>
+
+                        <form onsubmit="submitCOATransaction(event)" id="coaTransactionForm" class="mt-6">
+                            <h4 class="text-lg font-semibold text-gray-800 mb-4">📝 Input Transaksi Berdasarkan COA</h4>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2">Tanggal Transaksi</label>
+                                    <input type="date" id="coaTanggal" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2">Jenis Transaksi</label>
+                                    <select id="coaJenis" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" onchange="updateCOAOptions()" required>
+                                        <option value="">Pilih Jenis</option>
+                                        <option value="pendapatan">Pendapatan</option>
+                                        <option value="beban">Beban/Pengeluaran</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2">Akun COA</label>
+                                    <select id="coaAkun" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+                                        <option value="">Pilih Akun COA</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2">Jumlah (Rp)</label>
+                                    <input type="number" id="coaJumlah" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6">
+                                <label class="block text-gray-700 text-sm font-bold mb-2">Keterangan Transaksi</label>
+                                <textarea id="coaKeterangan" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Jelaskan detail transaksi..." required></textarea>
+                            </div>
+
+                            <div class="mt-6 flex gap-4">
+                                <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                                    💾 Simpan Transaksi
+                                </button>
+                                <button type="button" onclick="resetCOAForm()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                                    🔄 Reset Form
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Kas Umum Form -->
+                    <div id="kasumumForm" class="tab-content hidden">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">🏦 Kas Umum BUMDes</h3>
+                        
+                        <div class="bg-green-50 p-4 rounded-lg mb-6">
+                            <h4 class="font-semibold text-green-800 mb-2">💰 Saldo Kas Umum Saat Ini</h4>
+                            <p class="text-2xl font-bold text-green-600" id="currentKasUmum">Rp 75.000.000</p>
+                            <p class="text-sm text-green-700 mt-1">Terakhir diupdate: <span id="lastKasUpdate">-</span></p>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <!-- Form Input Kas -->
+                            <div class="bg-white border rounded-lg p-6">
+                                <h4 class="text-lg font-semibold text-gray-800 mb-4">📝 Input Transaksi Kas Umum</h4>
+                                
+                                <form onsubmit="submitKasUmumTransaction(event)" id="kasUmumForm">
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="block text-gray-700 text-sm font-bold mb-2">Tanggal Transaksi</label>
+                                            <input type="date" id="kasTanggal" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-gray-700 text-sm font-bold mb-2">Jenis Transaksi</label>
+                                            <select id="kasJenis" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+                                                <option value="">Pilih Jenis</option>
+                                                <option value="saldo_awal">Saldo Awal</option>
+                                                <option value="penyertaan_desa">Penyertaan Modal Desa</option>
+                                                <option value="penyertaan_lain">Penyertaan Modal Lainnya</option>
+                                                <option value="hibah">Hibah/Bantuan</option>
+                                                <option value="pinjaman">Pinjaman</option>
+                                                <option value="setoran_unit">Setoran dari Unit Usaha</option>
+                                                <option value="pengeluaran_operasional">Pengeluaran Operasional</option>
+                                                <option value="investasi">Investasi/Pembelian Aset</option>
+                                                <option value="pembayaran_hutang">Pembayaran Hutang</option>
+                                                <option value="setor_pades">Setor PADes ke Desa</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-gray-700 text-sm font-bold mb-2">Jumlah (Rp)</label>
+                                            <input type="number" id="kasJumlah" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-gray-700 text-sm font-bold mb-2">Sumber/Tujuan</label>
+                                            <input type="text" id="kasSumber" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Contoh: Desa Cikahuripan, Bank BRI, Unit Internet, dll" required>
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-gray-700 text-sm font-bold mb-2">Keterangan</label>
+                                            <textarea id="kasKeterangan" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Jelaskan detail transaksi..." required></textarea>
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-gray-700 text-sm font-bold mb-2">Nomor Bukti</label>
+                                            <input type="text" id="kasBukti" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Nomor kwitansi, nota, atau bukti transaksi">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-6 flex gap-4">
+                                        <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                                            💾 Simpan Transaksi
+                                        </button>
+                                        <button type="button" onclick="resetKasUmumForm()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                                            🔄 Reset Form
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                            
+                            <!-- Riwayat Transaksi Kas -->
+                            <div class="bg-white border rounded-lg p-6">
+                                <h4 class="text-lg font-semibold text-gray-800 mb-4">📋 Riwayat Transaksi Kas Umum</h4>
+                                
+                                <div class="mb-4">
+                                    <select id="kasFilter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm" onchange="filterKasHistory()">
+                                        <option value="all">Semua Transaksi</option>
+                                        <option value="masuk">Kas Masuk</option>
+                                        <option value="keluar">Kas Keluar</option>
+                                    </select>
+                                </div>
+                                
+                                <div id="kasHistoryList" class="space-y-3 max-h-96 overflow-y-auto">
+                                    <!-- Riwayat akan ditampilkan di sini -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Daily Report Form -->
+                    <div id="dailyForm" class="tab-content">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4" id="dailyFormTitle">📝 Input Laporan Harian</h3>
+                        <form onsubmit="submitDailyReport(event)" id="dailyReportForm">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2">Tanggal Laporan</label>
+                                    <input type="date" id="tanggalHarian" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2">Shift/Waktu</label>
+                                    <select id="shift" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+                                        <option value="">Pilih Shift</option>
+                                        <option value="pagi">Pagi (07:00-15:00)</option>
+                                        <option value="siang">Siang (15:00-23:00)</option>
+                                        <option value="malam">Malam (23:00-07:00)</option>
+                                        <option value="fullday">Full Day</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2">Pendapatan Harian (Rp)</label>
+                                    <input type="number" id="pendapatanHarian" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2">Pengeluaran Operasional (Rp)</label>
+                                    <input type="number" id="pengeluaranHarian" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2">Jumlah Pelanggan/Transaksi</label>
+                                    <input type="number" id="jumlahTransaksi" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2">Status Operasional</label>
+                                    <select id="statusOperasional" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+                                        <option value="">Pilih Status</option>
+                                        <option value="normal">Normal</option>
+                                        <option value="terganggu">Terganggu</option>
+                                        <option value="maintenance">Maintenance</option>
+                                        <option value="tutup">Tutup</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- Unit-specific fields -->
+                            <div id="unitSpecificFields" class="mt-6">
+                                <!-- Fields will be populated based on unit type -->
+                            </div>
+
+                            <div class="mt-6">
+                                <label class="block text-gray-700 text-sm font-bold mb-2">Aktivitas & Kejadian Penting</label>
+                                <textarea id="aktivitasHarian" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Catat aktivitas, kejadian penting, masalah yang terjadi, dll..."></textarea>
+                            </div>
+
+                            <div class="mt-6">
+                                <label class="block text-gray-700 text-sm font-bold mb-2">Kondisi Peralatan/Fasilitas</label>
+                                <textarea id="kondisiPeralatan" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Laporkan kondisi peralatan, kerusakan, atau kebutuhan maintenance..."></textarea>
+                            </div>
+
+                            <div class="mt-6 flex gap-4">
+                                <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                                    💾 Simpan Laporan Harian
+                                </button>
+                                <button type="button" onclick="resetDailyForm()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                                    🔄 Reset Form
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Asset Purchase Form -->
+                    <div id="assetForm" class="tab-content hidden">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4" id="assetFormTitle">🛒 Pembelian Peralatan & Aset</h3>
+                        <form onsubmit="submitAssetPurchase(event)" id="assetPurchaseForm">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2">Tanggal Pembelian</label>
+                                    <input type="date" id="tanggalPembelian" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2">Kategori Aset</label>
+                                    <select id="kategoriAset" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+                                        <option value="">Pilih Kategori</option>
+                                        <option value="tetap">Aset Tetap (>1 tahun)</option>
+                                        <option value="lancar">Aset Lancar (<1 tahun)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2">Nama Peralatan/Aset</label>
+                                    <input type="text" id="namaPeralatan" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Contoh: Router WiFi, Kulkas Display, dll" required>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2">Jumlah Unit</label>
+                                    <input type="number" id="jumlahUnit" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" min="1" required>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2">Harga per Unit (Rp)</label>
+                                    <input type="number" id="hargaUnit" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2">Total Harga (Rp)</label>
+                                    <input type="number" id="totalHarga" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 bg-gray-100" readonly>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2">Supplier/Toko</label>
+                                    <input type="text" id="supplier" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Nama supplier atau toko">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2">Metode Pembayaran</label>
+                                    <select id="metodePembayaran" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+                                        <option value="">Pilih Metode</option>
+                                        <option value="tunai">Tunai</option>
+                                        <option value="transfer">Transfer Bank</option>
+                                        <option value="kredit">Kredit/Cicilan</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6">
+                                <label class="block text-gray-700 text-sm font-bold mb-2">Spesifikasi & Keterangan</label>
+                                <textarea id="spesifikasi" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Spesifikasi teknis, garansi, kondisi, dll..."></textarea>
+                            </div>
+
+                            <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                                <h4 class="font-semibold text-blue-800 mb-2">💡 Dampak Otomatis ke Neraca:</h4>
+                                <div class="text-sm text-blue-700">
+                                    <p>✅ <strong>Aset Tetap</strong> akan bertambah jika kategori "Aset Tetap"</p>
+                                    <p>✅ <strong>Aset Lancar</strong> akan bertambah jika kategori "Aset Lancar"</p>
+                                    <p>✅ <strong>Kas</strong> akan berkurang sesuai total pembelian</p>
+                                    <p>✅ <strong>Laporan keuangan</strong> akan terupdate otomatis</p>
+                                </div>
+                            </div>
+
+                            <div class="mt-6 flex gap-4">
+                                <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                                    🛒 Proses Pembelian
+                                </button>
+                                <button type="button" onclick="resetAssetForm()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                                    🔄 Reset Form
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- SHU Distribution Form -->
+                    <div id="shuForm" class="tab-content hidden">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">💰 Pembagian Sisa Hasil Usaha (SHU) sesuai AD/ART</h3>
+                        
+                        <div class="bg-blue-50 p-4 rounded-lg mb-6">
+                            <h4 class="font-semibold text-blue-800 mb-2">📋 Ketentuan Pembagian SHU Berdasarkan AD/ART BUMDes</h4>
+                            <div class="text-sm text-blue-700 space-y-1">
+                                <p>• <strong>Penambahan Modal:</strong> 35% dari SHU untuk memperkuat modal usaha</p>
+                                <p>• <strong>PADes (Pendapatan Asli Desa):</strong> 30% dari SHU wajib disetor ke Desa</p>
+                                <p>• <strong>Insentif Pengurus:</strong> 20% dari SHU untuk kompensasi pengurus</p>
+                                <p>• <strong>CSR (Corporate Social Responsibility):</strong> 10% dari SHU untuk kegiatan sosial</p>
+                                <p>• <strong>Peningkatan Kapasitas Pengurus:</strong> 5% dari SHU untuk pelatihan dan pengembangan</p>
+                            </div>
+                        </div>
+
+                        <form onsubmit="processSHUDistribution(event)" id="shuDistributionForm">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2">Periode SHU</label>
+                                    <input type="month" id="shuPeriode" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2">Total SHU (Laba Bersih)</label>
+                                    <input type="number" id="shuAmount" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Akan terisi otomatis dari laporan" readonly>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2">Tanggal Pembagian</label>
+                                    <input type="date" id="tanggalPembagian" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2">Status Persetujuan</label>
+                                    <select id="statusPersetujuan" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+                                        <option value="">Pilih Status</option>
+                                        <option value="disetujui">Disetujui Rapat Anggota</option>
+                                        <option value="pending">Menunggu Persetujuan</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- SHU Distribution Preview -->
+                            <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+                                <h4 class="font-semibold text-gray-800 mb-4">📊 Preview Pembagian SHU</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div class="bg-green-50 p-3 rounded-lg">
+                                        <p class="text-sm text-gray-600">Penambahan Modal (35%)</p>
+                                        <p class="font-bold text-green-600" id="previewModal">Rp 0</p>
+                                    </div>
+                                    <div class="bg-blue-50 p-3 rounded-lg">
+                                        <p class="text-sm text-gray-600">PADes (30%)</p>
+                                        <p class="font-bold text-blue-600" id="previewPades">Rp 0</p>
+                                    </div>
+                                    <div class="bg-purple-50 p-3 rounded-lg">
+                                        <p class="text-sm text-gray-600">Insentif Pengurus (20%)</p>
+                                        <p class="font-bold text-purple-600" id="previewInsentif">Rp 0</p>
+                                    </div>
+                                    <div class="bg-orange-50 p-3 rounded-lg">
+                                        <p class="text-sm text-gray-600">CSR (10%)</p>
+                                        <p class="font-bold text-orange-600" id="previewCSR">Rp 0</p>
+                                    </div>
+                                    <div class="bg-yellow-50 p-3 rounded-lg">
+                                        <p class="text-sm text-gray-600">Peningkatan Kapasitas (5%)</p>
+                                        <p class="font-bold text-yellow-600" id="previewKapasitas">Rp 0</p>
+                                    </div>
+                                    <div class="bg-gray-100 p-3 rounded-lg">
+                                        <p class="text-sm text-gray-600">Total Distribusi</p>
+                                        <p class="font-bold text-gray-800" id="previewTotal">Rp 0</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-6">
+                                <label class="block text-gray-700 text-sm font-bold mb-2">Catatan Pembagian SHU</label>
+                                <textarea id="catatanSHU" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Catatan khusus, keputusan rapat, atau informasi tambahan..."></textarea>
+                            </div>
+
+                            <div class="mt-6 p-4 bg-yellow-50 rounded-lg">
+                                <h5 class="font-semibold text-yellow-800 mb-2">⚠️ Kewajiban Setor PADes</h5>
+                                <p class="text-sm text-yellow-700">
+                                    Sesuai AD/ART, BUMDes wajib menyetor 30% dari SHU sebagai Pendapatan Asli Desa (PADes) 
+                                    ke rekening Desa paling lambat 30 hari setelah pembagian SHU disetujui.
+                                </p>
+                            </div>
+
+                            <div class="mt-6 flex gap-4">
+                                <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                                    💰 Proses Pembagian SHU
+                                </button>
+                                <button type="button" onclick="calculateSHUPreview()" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                                    🔄 Hitung Preview
+                                </button>
+                                <button type="button" onclick="resetSHUForm()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                                    🔄 Reset Form
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Monthly Report Form -->
+                    <div id="monthlyForm" class="tab-content hidden">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4" id="monthlyFormTitle">📊 Input Laporan Bulanan</h3>
+                        <form onsubmit="submitMonthlyReport(event)" id="monthlyReportForm">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2">Periode Laporan</label>
+                                    <input type="month" id="periode" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2">Total Pendapatan (Rp)</label>
+                                    <input type="number" id="pendapatan" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2">Biaya Operasional (Rp)</label>
+                                    <input type="number" id="biayaOperasional" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2">Biaya Maintenance (Rp)</label>
+                                    <input type="number" id="biayaMaintenance" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2">Aset Lancar (Rp)</label>
+                                    <input type="number" id="asetLancar" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2">Aset Tetap (Rp)</label>
+                                    <input type="number" id="asetTetap" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2">Hutang (Rp)</label>
+                                    <input type="number" id="hutang" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 text-sm font-bold mb-2">Modal (Rp)</label>
+                                    <input type="number" id="modal" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
+                                </div>
+                            </div>
+                            <div class="mt-6">
+                                <label class="block text-gray-700 text-sm font-bold mb-2">Ringkasan Bulanan</label>
+                                <textarea id="catatan" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Masukkan ringkasan kegiatan, pencapaian, dan rencana bulan depan..."></textarea>
+                            </div>
+                            <div class="mt-6 flex gap-4">
+                                <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                                    💾 Simpan Laporan Bulanan
+                                </button>
+                                <button type="button" onclick="resetMonthlyForm()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                                    🔄 Reset Form
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- History Tab -->
+                    <div id="historyTab" class="tab-content hidden">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">📋 Riwayat Laporan</h3>
+                        <div class="mb-4 flex gap-4">
+                            <select id="filterType" class="px-3 py-2 border border-gray-300 rounded-lg" onchange="filterHistory()">
+                                <option value="all">Semua Laporan</option>
+                                <option value="daily">Laporan Harian</option>
+                                <option value="asset_purchase">Pembelian Aset</option>
+                                <option value="monthly">Laporan Bulanan</option>
+                            </select>
+                            <input type="month" id="filterMonth" class="px-3 py-2 border border-gray-300 rounded-lg" onchange="filterHistory()">
+                        </div>
+                        <div id="historyList" class="space-y-4">
+                            <!-- History items will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Laporan Keuangan Konsolidasi -->
+            <div id="laporanKeuangan" class="unit-content hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <!-- Neraca -->
+                    <div class="bg-white rounded-xl shadow-md p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">📊 Neraca BUMDes</h3>
+                        <div class="space-y-4">
+                            <div class="border-b pb-2">
+                                <h4 class="font-semibold text-gray-700">ASET</h4>
+                                <div class="ml-4 space-y-1 text-sm">
+                                    <div class="flex justify-between">
+                                        <span>Aset Lancar</span>
+                                        <span id="totalAsetLancar">Rp 125.000.000</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Aset Tetap</span>
+                                        <span id="totalAsetTetap">Rp 450.000.000</span>
+                                    </div>
+                                    <div class="flex justify-between font-semibold border-t pt-1">
+                                        <span>Total Aset</span>
+                                        <span id="totalAset">Rp 575.000.000</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="border-b pb-2">
+                                <h4 class="font-semibold text-gray-700">KEWAJIBAN</h4>
+                                <div class="ml-4 space-y-1 text-sm">
+                                    <div class="flex justify-between">
+                                        <span>Hutang Jangka Pendek</span>
+                                        <span id="totalHutang">Rp 25.000.000</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-700">EKUITAS</h4>
+                                <div class="ml-4 space-y-1 text-sm">
+                                    <div class="flex justify-between">
+                                        <span>Modal Dasar</span>
+                                        <span id="totalModal">Rp 400.000.000</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Laba Ditahan</span>
+                                        <span id="labaDitahan">Rp 150.000.000</span>
+                                    </div>
+                                    <div class="flex justify-between font-semibold border-t pt-1">
+                                        <span>Total Ekuitas</span>
+                                        <span id="totalEkuitas">Rp 550.000.000</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Laba Rugi -->
+                    <div class="bg-white rounded-xl shadow-md p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">💰 Laba Rugi BUMDes</h3>
+                        <div class="space-y-4">
+                            <div class="border-b pb-2">
+                                <h4 class="font-semibold text-gray-700">PENDAPATAN</h4>
+                                <div class="ml-4 space-y-1 text-sm">
+                                    <div class="flex justify-between">
+                                        <span>Pendapatan Usaha</span>
+                                        <span id="totalPendapatan">Rp 55.500.000</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="border-b pb-2">
+                                <h4 class="font-semibold text-gray-700">BEBAN</h4>
+                                <div class="ml-4 space-y-1 text-sm">
+                                    <div class="flex justify-between">
+                                        <span>Beban Operasional</span>
+                                        <span id="totalBebanOperasional">Rp 12.500.000</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Beban Maintenance</span>
+                                        <span id="totalBebanMaintenance">Rp 8.250.000</span>
+                                    </div>
+                                    <div class="flex justify-between font-semibold border-t pt-1">
+                                        <span>Total Beban</span>
+                                        <span id="totalBeban">Rp 20.750.000</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between font-bold text-lg text-green-600">
+                                    <span>Laba Bersih</span>
+                                    <span id="labaBersih">Rp 34.750.000</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pembagian SHU sesuai AD/ART -->
+                <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">📋 Pembagian Sisa Hasil Usaha (SHU) sesuai AD/ART</h3>
+                    <div class="bg-blue-50 p-4 rounded-lg mb-4">
+                        <h4 class="font-semibold text-blue-800 mb-2">📊 Dasar Perhitungan SHU</h4>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div class="flex justify-between">
+                                <span>Laba Bersih (SHU):</span>
+                                <span class="font-semibold" id="shuTotal">Rp 34.750.000</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Status:</span>
+                                <span class="font-semibold text-green-600">Siap Dibagi</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="font-semibold text-gray-700 mb-3">💰 Alokasi SHU Berdasarkan AD/ART</h4>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                                    <div>
+                                        <span class="font-medium">Penambahan Modal</span>
+                                        <p class="text-xs text-gray-600">35% dari SHU</p>
+                                    </div>
+                                    <span class="font-bold text-green-600" id="modalTambahan">Rp 12.162.500</span>
+                                </div>
+                                
+                                <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                                    <div>
+                                        <span class="font-medium">PADes (Pendapatan Asli Desa)</span>
+                                        <p class="text-xs text-gray-600">30% dari SHU</p>
+                                    </div>
+                                    <span class="font-bold text-blue-600" id="pades">Rp 10.425.000</span>
+                                </div>
+                                
+                                <div class="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
+                                    <div>
+                                        <span class="font-medium">Insentif Pengurus</span>
+                                        <p class="text-xs text-gray-600">20% dari SHU</p>
+                                    </div>
+                                    <span class="font-bold text-purple-600" id="insentifPengurus">Rp 6.950.000</span>
+                                </div>
+                                
+                                <div class="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
+                                    <div>
+                                        <span class="font-medium">CSR (Corporate Social Responsibility)</span>
+                                        <p class="text-xs text-gray-600">10% dari SHU</p>
+                                    </div>
+                                    <span class="font-bold text-orange-600" id="csr">Rp 3.475.000</span>
+                                </div>
+                                
+                                <div class="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
+                                    <div>
+                                        <span class="font-medium">Peningkatan Kapasitas Pengurus</span>
+                                        <p class="text-xs text-gray-600">5% dari SHU</p>
+                                    </div>
+                                    <span class="font-bold text-yellow-600" id="kapasitasPengurus">Rp 1.737.500</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h4 class="font-semibold text-gray-700 mb-3">📈 Ringkasan Pembagian</h4>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <canvas id="shuChart" width="300" height="300"></canvas>
+                            </div>
+                            
+                            <div class="mt-4 p-4 bg-green-50 rounded-lg">
+                                <h5 class="font-semibold text-green-800 mb-2">✅ Verifikasi Total</h5>
+                                <div class="space-y-1 text-sm">
+                                    <div class="flex justify-between">
+                                        <span>Total Alokasi:</span>
+                                        <span class="font-semibold" id="totalAlokasi">Rp 34.750.000</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>SHU Tersedia:</span>
+                                        <span class="font-semibold" id="shuTersedia">Rp 34.750.000</span>
+                                    </div>
+                                    <div class="flex justify-between border-t pt-1">
+                                        <span>Selisih:</span>
+                                        <span class="font-semibold text-green-600" id="selisihShu">Rp 0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                        <h5 class="font-semibold text-blue-800 mb-2">📋 Kewajiban Setor PADes</h5>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                            <div>
+                                <span class="text-gray-600">Jumlah PADes:</span>
+                                <p class="font-bold text-blue-600" id="padesAmount">Rp 10.425.000</p>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Persentase dari SHU:</span>
+                                <p class="font-bold">30%</p>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Status Setor:</span>
+                                <p class="font-bold text-orange-600">Belum Disetor</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Arus Kas -->
+                <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">💸 Laporan Arus Kas BUMDes</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <h4 class="font-semibold text-gray-700 mb-2">Arus Kas Operasi</h4>
+                            <div class="space-y-1 text-sm">
+                                <div class="flex justify-between">
+                                    <span>Penerimaan dari Pelanggan</span>
+                                    <span class="text-green-600">Rp 55.500.000</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Pembayaran Beban</span>
+                                    <span class="text-red-600">(Rp 20.750.000)</span>
+                                </div>
+                                <div class="flex justify-between font-semibold border-t pt-1">
+                                    <span>Kas Bersih Operasi</span>
+                                    <span class="text-green-600">Rp 34.750.000</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-700 mb-2">Arus Kas Investasi</h4>
+                            <div class="space-y-1 text-sm">
+                                <div class="flex justify-between">
+                                    <span>Pembelian Aset</span>
+                                    <span class="text-red-600">(Rp 15.000.000)</span>
+                                </div>
+                                <div class="flex justify-between font-semibold border-t pt-1">
+                                    <span>Kas Bersih Investasi</span>
+                                    <span class="text-red-600">(Rp 15.000.000)</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-700 mb-2">Arus Kas Pendanaan</h4>
+                            <div class="space-y-1 text-sm">
+                                <div class="flex justify-between">
+                                    <span>Penambahan Modal</span>
+                                    <span class="text-green-600">Rp 10.000.000</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Setor PADes ke Desa</span>
+                                    <span class="text-red-600">(Rp 10.425.000)</span>
+                                </div>
+                                <div class="flex justify-between font-semibold border-t pt-1">
+                                    <span>Kas Bersih Pendanaan</span>
+                                    <span class="text-red-600">(Rp 425.000)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-4 border-t">
+                        <div class="flex justify-between font-bold text-lg">
+                            <span>Kenaikan Kas Bersih</span>
+                            <span class="text-green-600">Rp 19.325.000</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Default Summary View -->
+            <div id="summary" class="unit-content">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white rounded-xl shadow-md p-6 card-hover">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm">Total Pendapatan</p>
+                                <p class="text-2xl font-bold text-green-600">Rp 45.750.000</p>
+                            </div>
+                            <div class="bg-green-100 p-3 rounded-full">
+                                <span class="text-2xl">💰</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-md p-6 card-hover">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm">Total Biaya Maintenance</p>
+                                <p class="text-2xl font-bold text-red-600">Rp 8.250.000</p>
+                            </div>
+                            <div class="bg-red-100 p-3 rounded-full">
+                                <span class="text-2xl">🔧</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-md p-6 card-hover">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm">Laba Bersih</p>
+                                <p class="text-2xl font-bold text-blue-600">Rp 37.500.000</p>
+                            </div>
+                            <div class="bg-blue-100 p-3 rounded-full">
+                                <span class="text-2xl">📊</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-md p-6 card-hover">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm">Efisiensi Maintenance</p>
+                                <p class="text-2xl font-bold text-purple-600">82%</p>
+                            </div>
+                            <div class="bg-purple-100 p-3 rounded-full">
+                                <span class="text-2xl">⚡</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">📈 Grafik Pendapatan per Unit</h3>
+                    <canvas id="revenueChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+
+            <!-- Unit Internet -->
+            <div id="internet" class="unit-content hidden">
+                <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">🌐 Unit Internet - Laporan CMMS</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600">Pendapatan Bulanan</p>
+                            <p class="text-xl font-bold text-blue-600">Rp 12.500.000</p>
+                        </div>
+                        <div class="bg-red-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600">Biaya Maintenance</p>
+                            <p class="text-xl font-bold text-red-600">Rp 1.750.000</p>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600">Uptime</p>
+                            <p class="text-xl font-bold text-green-600">98.5%</p>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="px-4 py-2 text-left">Perangkat</th>
+                                    <th class="px-4 py-2 text-left">Status</th>
+                                    <th class="px-4 py-2 text-left">Last Maintenance</th>
+                                    <th class="px-4 py-2 text-left">Next Schedule</th>
+                                    <th class="px-4 py-2 text-left">Biaya</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b">
+                                    <td class="px-4 py-2">Router Utama</td>
+                                    <td class="px-4 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Normal</span></td>
+                                    <td class="px-4 py-2">15 Nov 2024</td>
+                                    <td class="px-4 py-2">15 Des 2024</td>
+                                    <td class="px-4 py-2">Rp 250.000</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="px-4 py-2">Access Point (10 unit)</td>
+                                    <td class="px-4 py-2"><span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">Perlu Cek</span></td>
+                                    <td class="px-4 py-2">10 Nov 2024</td>
+                                    <td class="px-4 py-2">25 Nov 2024</td>
+                                    <td class="px-4 py-2">Rp 500.000</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="px-4 py-2">Server</td>
+                                    <td class="px-4 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Normal</span></td>
+                                    <td class="px-4 py-2">20 Nov 2024</td>
+                                    <td class="px-4 py-2">20 Des 2024</td>
+                                    <td class="px-4 py-2">Rp 1.000.000</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Unit Toko -->
+            <div id="toko" class="unit-content hidden">
+                <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">🏪 Toko BUMDes - Laporan CMMS</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <div class="bg-green-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600">Pendapatan Bulanan</p>
+                            <p class="text-xl font-bold text-green-600">Rp 8.750.000</p>
+                        </div>
+                        <div class="bg-red-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600">Biaya Maintenance</p>
+                            <p class="text-xl font-bold text-red-600">Rp 1.250.000</p>
+                        </div>
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600">Kondisi Fasilitas</p>
+                            <p class="text-xl font-bold text-blue-600">85%</p>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="px-4 py-2 text-left">Fasilitas</th>
+                                    <th class="px-4 py-2 text-left">Kondisi</th>
+                                    <th class="px-4 py-2 text-left">Last Maintenance</th>
+                                    <th class="px-4 py-2 text-left">Next Schedule</th>
+                                    <th class="px-4 py-2 text-left">Biaya</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b">
+                                    <td class="px-4 py-2">AC Toko</td>
+                                    <td class="px-4 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Baik</span></td>
+                                    <td class="px-4 py-2">12 Nov 2024</td>
+                                    <td class="px-4 py-2">12 Des 2024</td>
+                                    <td class="px-4 py-2">Rp 300.000</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="px-4 py-2">Kulkas Display</td>
+                                    <td class="px-4 py-2"><span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">Perlu Service</span></td>
+                                    <td class="px-4 py-2">5 Nov 2024</td>
+                                    <td class="px-4 py-2">28 Nov 2024</td>
+                                    <td class="px-4 py-2">Rp 450.000</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="px-4 py-2">Sistem Kasir</td>
+                                    <td class="px-4 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Baik</span></td>
+                                    <td class="px-4 py-2">18 Nov 2024</td>
+                                    <td class="px-4 py-2">18 Des 2024</td>
+                                    <td class="px-4 py-2">Rp 500.000</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Unit Kios -->
+            <div id="kios" class="unit-content hidden">
+                <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">🏬 Penyewaan Kios (6 Unit) - Laporan CMMS</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                        <div class="bg-purple-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600">Pendapatan Sewa</p>
+                            <p class="text-xl font-bold text-purple-600">Rp 6.000.000</p>
+                        </div>
+                        <div class="bg-red-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600">Biaya Maintenance</p>
+                            <p class="text-xl font-bold text-red-600">Rp 1.800.000</p>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600">Tingkat Hunian</p>
+                            <p class="text-xl font-bold text-green-600">100%</p>
+                        </div>
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600">Kondisi Rata-rata</p>
+                            <p class="text-xl font-bold text-blue-600">88%</p>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="px-4 py-2 text-left">Kios</th>
+                                    <th class="px-4 py-2 text-left">Penyewa</th>
+                                    <th class="px-4 py-2 text-left">Kondisi</th>
+                                    <th class="px-4 py-2 text-left">Last Maintenance</th>
+                                    <th class="px-4 py-2 text-left">Biaya Maintenance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b">
+                                    <td class="px-4 py-2">Kios A1</td>
+                                    <td class="px-4 py-2">Warung Makan Sari</td>
+                                    <td class="px-4 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Baik</span></td>
+                                    <td class="px-4 py-2">10 Nov 2024</td>
+                                    <td class="px-4 py-2">Rp 250.000</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="px-4 py-2">Kios A2</td>
+                                    <td class="px-4 py-2">Toko Kelontong Barokah</td>
+                                    <td class="px-4 py-2"><span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">Perlu Perbaikan</span></td>
+                                    <td class="px-4 py-2">8 Nov 2024</td>
+                                    <td class="px-4 py-2">Rp 400.000</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="px-4 py-2">Kios B1</td>
+                                    <td class="px-4 py-2">Salon Cantik</td>
+                                    <td class="px-4 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Baik</span></td>
+                                    <td class="px-4 py-2">15 Nov 2024</td>
+                                    <td class="px-4 py-2">Rp 300.000</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="px-4 py-2">Kios B2</td>
+                                    <td class="px-4 py-2">Bengkel Motor</td>
+                                    <td class="px-4 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Baik</span></td>
+                                    <td class="px-4 py-2">12 Nov 2024</td>
+                                    <td class="px-4 py-2">Rp 350.000</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="px-4 py-2">Kios C1</td>
+                                    <td class="px-4 py-2">Fotocopy & Print</td>
+                                    <td class="px-4 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Baik</span></td>
+                                    <td class="px-4 py-2">14 Nov 2024</td>
+                                    <td class="px-4 py-2">Rp 200.000</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="px-4 py-2">Kios C2</td>
+                                    <td class="px-4 py-2">Toko Pakaian</td>
+                                    <td class="px-4 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Baik</span></td>
+                                    <td class="px-4 py-2">16 Nov 2024</td>
+                                    <td class="px-4 py-2">Rp 300.000</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Unit Lapak -->
+            <div id="lapak" class="unit-content hidden">
+                <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">🛒 Lapak (5 Unit) & Lapak K5 (6 Unit) - Laporan CMMS</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                        <div class="bg-orange-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600">Pendapatan Sewa</p>
+                            <p class="text-xl font-bold text-orange-600">Rp 3.300.000</p>
+                        </div>
+                        <div class="bg-red-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600">Biaya Maintenance</p>
+                            <p class="text-xl font-bold text-red-600">Rp 1.100.000</p>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600">Total Unit</p>
+                            <p class="text-xl font-bold text-green-600">11 Unit</p>
+                        </div>
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600">Tingkat Hunian</p>
+                            <p class="text-xl font-bold text-blue-600">91%</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="font-semibold text-gray-800 mb-3">Lapak Reguler (5 Unit)</h4>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm">
+                                    <thead class="bg-gray-100">
+                                        <tr>
+                                            <th class="px-3 py-2 text-left">Unit</th>
+                                            <th class="px-3 py-2 text-left">Status</th>
+                                            <th class="px-3 py-2 text-left">Kondisi</th>
+                                            <th class="px-3 py-2 text-left">Biaya</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border-b">
+                                            <td class="px-3 py-2">Lapak 1</td>
+                                            <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Terisi</span></td>
+                                            <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Baik</span></td>
+                                            <td class="px-3 py-2">Rp 100.000</td>
+                                        </tr>
+                                        <tr class="border-b">
+                                            <td class="px-3 py-2">Lapak 2</td>
+                                            <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Terisi</span></td>
+                                            <td class="px-3 py-2"><span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">Perlu Perbaikan</span></td>
+                                            <td class="px-3 py-2">Rp 150.000</td>
+                                        </tr>
+                                        <tr class="border-b">
+                                            <td class="px-3 py-2">Lapak 3</td>
+                                            <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Terisi</span></td>
+                                            <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Baik</span></td>
+                                            <td class="px-3 py-2">Rp 100.000</td>
+                                        </tr>
+                                        <tr class="border-b">
+                                            <td class="px-3 py-2">Lapak 4</td>
+                                            <td class="px-3 py-2"><span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">Kosong</span></td>
+                                            <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Baik</span></td>
+                                            <td class="px-3 py-2">Rp 75.000</td>
+                                        </tr>
+                                        <tr class="border-b">
+                                            <td class="px-3 py-2">Lapak 5</td>
+                                            <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Terisi</span></td>
+                                            <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Baik</span></td>
+                                            <td class="px-3 py-2">Rp 100.000</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h4 class="font-semibold text-gray-800 mb-3">Lapak K5 (6 Unit)</h4>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm">
+                                    <thead class="bg-gray-100">
+                                        <tr>
+                                            <th class="px-3 py-2 text-left">Unit</th>
+                                            <th class="px-3 py-2 text-left">Status</th>
+                                            <th class="px-3 py-2 text-left">Kondisi</th>
+                                            <th class="px-3 py-2 text-left">Biaya</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border-b">
+                                            <td class="px-3 py-2">K5-1</td>
+                                            <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Terisi</span></td>
+                                            <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Baik</span></td>
+                                            <td class="px-3 py-2">Rp 125.000</td>
+                                        </tr>
+                                        <tr class="border-b">
+                                            <td class="px-3 py-2">K5-2</td>
+                                            <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Terisi</span></td>
+                                            <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Baik</span></td>
+                                            <td class="px-3 py-2">Rp 125.000</td>
+                                        </tr>
+                                        <tr class="border-b">
+                                            <td class="px-3 py-2">K5-3</td>
+                                            <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Terisi</span></td>
+                                            <td class="px-3 py-2"><span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">Perlu Perbaikan</span></td>
+                                            <td class="px-3 py-2">Rp 175.000</td>
+                                        </tr>
+                                        <tr class="border-b">
+                                            <td class="px-3 py-2">K5-4</td>
+                                            <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Terisi</span></td>
+                                            <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Baik</span></td>
+                                            <td class="px-3 py-2">Rp 125.000</td>
+                                        </tr>
+                                        <tr class="border-b">
+                                            <td class="px-3 py-2">K5-5</td>
+                                            <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Terisi</span></td>
+                                            <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Baik</span></td>
+                                            <td class="px-3 py-2">Rp 125.000</td>
+                                        </tr>
+                                        <tr class="border-b">
+                                            <td class="px-3 py-2">K5-6</td>
+                                            <td class="px-3 py-2"><span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">Kosong</span></td>
+                                            <td class="px-3 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Baik</span></td>
+                                            <td class="px-3 py-2">Rp 100.000</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Unit Lapangan -->
+            <div id="lapangan" class="unit-content hidden">
+                <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">⚽ Penyewaan Lapangan - Laporan CMMS</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                        <div class="bg-red-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600">Pendapatan Sewa</p>
+                            <p class="text-xl font-bold text-red-600">Rp 4.500.000</p>
+                        </div>
+                        <div class="bg-orange-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600">Biaya Maintenance</p>
+                            <p class="text-xl font-bold text-orange-600">Rp 1.500.000</p>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600">Tingkat Utilisasi</p>
+                            <p class="text-xl font-bold text-green-600">75%</p>
+                        </div>
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600">Kondisi Lapangan</p>
+                            <p class="text-xl font-bold text-blue-600">80%</p>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="px-4 py-2 text-left">Fasilitas</th>
+                                    <th class="px-4 py-2 text-left">Kondisi</th>
+                                    <th class="px-4 py-2 text-left">Last Maintenance</th>
+                                    <th class="px-4 py-2 text-left">Next Schedule</th>
+                                    <th class="px-4 py-2 text-left">Biaya</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b">
+                                    <td class="px-4 py-2">Rumput Lapangan</td>
+                                    <td class="px-4 py-2"><span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">Perlu Perawatan</span></td>
+                                    <td class="px-4 py-2">5 Nov 2024</td>
+                                    <td class="px-4 py-2">25 Nov 2024</td>
+                                    <td class="px-4 py-2">Rp 500.000</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="px-4 py-2">Gawang (2 unit)</td>
+                                    <td class="px-4 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Baik</span></td>
+                                    <td class="px-4 py-2">10 Nov 2024</td>
+                                    <td class="px-4 py-2">10 Des 2024</td>
+                                    <td class="px-4 py-2">Rp 200.000</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="px-4 py-2">Lampu Penerangan</td>
+                                    <td class="px-4 py-2"><span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">Perlu Ganti</span></td>
+                                    <td class="px-4 py-2">1 Nov 2024</td>
+                                    <td class="px-4 py-2">22 Nov 2024</td>
+                                    <td class="px-4 py-2">Rp 600.000</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="px-4 py-2">Tribun Penonton</td>
+                                    <td class="px-4 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Baik</span></td>
+                                    <td class="px-4 py-2">15 Nov 2024</td>
+                                    <td class="px-4 py-2">15 Des 2024</td>
+                                    <td class="px-4 py-2">Rp 200.000</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Unit Sampah -->
+            <div id="sampah" class="unit-content hidden">
+                <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">♻️ Unit Usaha Pengelolaan Sampah - Laporan CMMS</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                        <div class="bg-teal-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600">Pendapatan Bulanan</p>
+                            <p class="text-xl font-bold text-teal-600">Rp 5.200.000</p>
+                        </div>
+                        <div class="bg-red-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600">Biaya Maintenance</p>
+                            <p class="text-xl font-bold text-red-600">Rp 1.200.000</p>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600">Volume Sampah/Bulan</p>
+                            <p class="text-xl font-bold text-green-600">15 Ton</p>
+                        </div>
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600">Efisiensi Operasional</p>
+                            <p class="text-xl font-bold text-blue-600">85%</p>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="px-4 py-2 text-left">Peralatan</th>
+                                    <th class="px-4 py-2 text-left">Kondisi</th>
+                                    <th class="px-4 py-2 text-left">Last Maintenance</th>
+                                    <th class="px-4 py-2 text-left">Next Schedule</th>
+                                    <th class="px-4 py-2 text-left">Biaya</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b">
+                                    <td class="px-4 py-2">Truk Sampah</td>
+                                    <td class="px-4 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Baik</span></td>
+                                    <td class="px-4 py-2">8 Nov 2024</td>
+                                    <td class="px-4 py-2">8 Des 2024</td>
+                                    <td class="px-4 py-2">Rp 400.000</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="px-4 py-2">Mesin Pencacah</td>
+                                    <td class="px-4 py-2"><span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">Perlu Service</span></td>
+                                    <td class="px-4 py-2">3 Nov 2024</td>
+                                    <td class="px-4 py-2">26 Nov 2024</td>
+                                    <td class="px-4 py-2">Rp 350.000</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="px-4 py-2">Komposter</td>
+                                    <td class="px-4 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Baik</span></td>
+                                    <td class="px-4 py-2">12 Nov 2024</td>
+                                    <td class="px-4 py-2">12 Des 2024</td>
+                                    <td class="px-4 py-2">Rp 250.000</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="px-4 py-2">Timbangan Digital</td>
+                                    <td class="px-4 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Baik</span></td>
+                                    <td class="px-4 py-2">18 Nov 2024</td>
+                                    <td class="px-4 py-2">18 Des 2024</td>
+                                    <td class="px-4 py-2">Rp 200.000</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Unit Ayam -->
+            <div id="ayam" class="unit-content hidden">
+                <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">🐔 Unit Usaha Ketahanan Pangan Ayam Petelur (1500 ekor) - Laporan CMMS</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                        <div class="bg-yellow-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600">Pendapatan Telur</p>
+                            <p class="text-xl font-bold text-yellow-600">Rp 15.500.000</p>
+                        </div>
+                        <div class="bg-red-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600">Biaya Maintenance</p>
+                            <p class="text-xl font-bold text-red-600">Rp 2.650.000</p>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600">Produksi Telur/Hari</p>
+                            <p class="text-xl font-bold text-green-600">1.200 butir</p>
+                        </div>
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600">Tingkat Produktivitas</p>
+                            <p class="text-xl font-bold text-blue-600">80%</p>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="px-4 py-2 text-left">Fasilitas</th>
+                                    <th class="px-4 py-2 text-left">Kondisi</th>
+                                    <th class="px-4 py-2 text-left">Last Maintenance</th>
+                                    <th class="px-4 py-2 text-left">Next Schedule</th>
+                                    <th class="px-4 py-2 text-left">Biaya</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b">
+                                    <td class="px-4 py-2">Kandang Battery (15 unit)</td>
+                                    <td class="px-4 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Baik</span></td>
+                                    <td class="px-4 py-2">7 Nov 2024</td>
+                                    <td class="px-4 py-2">7 Des 2024</td>
+                                    <td class="px-4 py-2">Rp 750.000</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="px-4 py-2">Sistem Pakan Otomatis</td>
+                                    <td class="px-4 py-2"><span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">Perlu Kalibrasi</span></td>
+                                    <td class="px-4 py-2">2 Nov 2024</td>
+                                    <td class="px-4 py-2">24 Nov 2024</td>
+                                    <td class="px-4 py-2">Rp 500.000</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="px-4 py-2">Sistem Minum Nipple</td>
+                                    <td class="px-4 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Baik</span></td>
+                                    <td class="px-4 py-2">14 Nov 2024</td>
+                                    <td class="px-4 py-2">14 Des 2024</td>
+                                    <td class="px-4 py-2">Rp 300.000</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="px-4 py-2">Exhaust Fan (8 unit)</td>
+                                    <td class="px-4 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Baik</span></td>
+                                    <td class="px-4 py-2">11 Nov 2024</td>
+                                    <td class="px-4 py-2">11 Des 2024</td>
+                                    <td class="px-4 py-2">Rp 400.000</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="px-4 py-2">Mesin Sortir Telur</td>
+                                    <td class="px-4 py-2"><span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">Perlu Service</span></td>
+                                    <td class="px-4 py-2">6 Nov 2024</td>
+                                    <td class="px-4 py-2">28 Nov 2024</td>
+                                    <td class="px-4 py-2">Rp 450.000</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="px-4 py-2">Generator Listrik</td>
+                                    <td class="px-4 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Baik</span></td>
+                                    <td class="px-4 py-2">16 Nov 2024</td>
+                                    <td class="px-4 py-2">16 Des 2024</td>
+                                    <td class="px-4 py-2">Rp 250.000</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export & Print Buttons -->
+        <div class="bg-white rounded-xl shadow-md p-6 mt-8">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">📄 Export Laporan</h3>
+            <div class="flex flex-wrap gap-4">
+                <button onclick="exportToPDF()" class="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2">
+                    📄 Export PDF
+                </button>
+                <button onclick="exportToExcel()" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2">
+                    📊 Export Excel
+                </button>
+                <button onclick="printReport()" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2">
+                    🖨️ Print Laporan
+                </button>
+                <button onclick="sendEmail()" class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2">
+                    📧 Kirim Email
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8 mt-12">
+        <div class="container mx-auto px-6 text-center">
+            <p class="text-gray-300">© 2024 BUMDes Cikahuripan - Sistem Laporan CMMS</p>
+            <p class="text-gray-400 text-sm mt-2">Computerized Maintenance Management System untuk optimalisasi operasional</p>
+        </div>
+    </footer>
+
+    <script>
+        // Global variables
+        let currentUser = null;
+        let reportData = JSON.parse(localStorage.getItem('bumdesReports')) || {};
+        let dailyReports = JSON.parse(localStorage.getItem('bumdesDailyReports')) || {};
+        let assetPurchases = JSON.parse(localStorage.getItem('bumdesAssetPurchases')) || {};
+        let coaTransactions = JSON.parse(localStorage.getItem('bumdesCOATransactions')) || {};
+        let kasUmumTransactions = JSON.parse(localStorage.getItem('bumdesKasUmumTransactions')) || [];
+        let kasUmumSaldo = JSON.parse(localStorage.getItem('bumdesKasUmumSaldo')) || 75000000;
+        let consolidatedAssets = JSON.parse(localStorage.getItem('bumdesConsolidatedAssets')) || {
+            asetTetap: 450000000,
+            asetLancar: 125000000,
+            kas: 75000000
+        };
+        let currentTab = 'daily';
+
+        // Chart of Accounts (COA) untuk setiap unit
+        const unitCOA = {
+            internet: {
+                pendapatan: [
+                    { code: '4101', name: 'Pendapatan Layanan Internet', description: 'Pendapatan dari layanan internet bulanan' },
+                    { code: '4102', name: 'Pendapatan Instalasi Baru', description: 'Biaya instalasi pelanggan baru' },
+                    { code: '4103', name: 'Pendapatan Upgrade Paket', description: 'Pendapatan dari upgrade paket internet' },
+                    { code: '4104', name: 'Pendapatan Denda Keterlambatan', description: 'Denda pembayaran terlambat' }
+                ],
+                beban: [
+                    { code: '5101', name: 'Beban Bandwidth/ISP', description: 'Biaya bandwidth dari provider' },
+                    { code: '5102', name: 'Beban Listrik Perangkat', description: 'Biaya listrik untuk perangkat jaringan' },
+                    { code: '5103', name: 'Beban Maintenance Perangkat', description: 'Biaya perawatan router, AP, server' },
+                    { code: '5104', name: 'Beban Teknisi', description: 'Gaji/honor teknisi jaringan' },
+                    { code: '5105', name: 'Beban Spare Part', description: 'Pembelian komponen pengganti' }
+                ]
+            },
+            toko: {
+                pendapatan: [
+                    { code: '4201', name: 'Penjualan Sembako', description: 'Penjualan beras, minyak, gula, dll' },
+                    { code: '4202', name: 'Penjualan Minuman', description: 'Penjualan air mineral, soft drink, dll' },
+                    { code: '4203', name: 'Penjualan Makanan Ringan', description: 'Penjualan snack, biskuit, dll' },
+                    { code: '4204', name: 'Penjualan Kebutuhan Harian', description: 'Sabun, pasta gigi, dll' }
+                ],
+                beban: [
+                    { code: '5201', name: 'Harga Pokok Penjualan', description: 'Biaya pembelian barang dagangan' },
+                    { code: '5202', name: 'Beban Listrik Toko', description: 'Biaya listrik AC, lampu, kulkas' },
+                    { code: '5203', name: 'Beban Gaji Kasir', description: 'Gaji/honor kasir toko' },
+                    { code: '5204', name: 'Beban Maintenance Kulkas', description: 'Service kulkas display' },
+                    { code: '5205', name: 'Beban Kebersihan', description: 'Biaya kebersihan toko' }
+                ]
+            },
+            kios: {
+                pendapatan: [
+                    { code: '4301', name: 'Pendapatan Sewa Kios A', description: 'Sewa kios blok A (2 unit)' },
+                    { code: '4302', name: 'Pendapatan Sewa Kios B', description: 'Sewa kios blok B (2 unit)' },
+                    { code: '4303', name: 'Pendapatan Sewa Kios C', description: 'Sewa kios blok C (2 unit)' },
+                    { code: '4304', name: 'Pendapatan Denda Keterlambatan', description: 'Denda terlambat bayar sewa' }
+                ],
+                beban: [
+                    { code: '5301', name: 'Beban Listrik Kios', description: 'Biaya listrik area kios' },
+                    { code: '5302', name: 'Beban Maintenance Bangunan', description: 'Perbaikan atap, dinding, lantai' },
+                    { code: '5303', name: 'Beban Kebersihan Area', description: 'Biaya kebersihan area kios' },
+                    { code: '5304', name: 'Beban Keamanan', description: 'Biaya keamanan area kios' },
+                    { code: '5305', name: 'Beban Air', description: 'Biaya air bersih kios' }
+                ]
+            },
+            lapak: {
+                pendapatan: [
+                    { code: '4401', name: 'Pendapatan Sewa Lapak Reguler', description: 'Sewa lapak 1-5' },
+                    { code: '4402', name: 'Pendapatan Sewa Lapak K5', description: 'Sewa lapak K5 (6 unit)' },
+                    { code: '4403', name: 'Pendapatan Retribusi Harian', description: 'Retribusi pedagang harian' },
+                    { code: '4404', name: 'Pendapatan Denda', description: 'Denda pelanggaran aturan' }
+                ],
+                beban: [
+                    { code: '5401', name: 'Beban Listrik Lapak', description: 'Biaya listrik area lapak' },
+                    { code: '5402', name: 'Beban Kebersihan Pasar', description: 'Biaya kebersihan area lapak' },
+                    { code: '5403', name: 'Beban Maintenance Fasilitas', description: 'Perbaikan meja, atap lapak' },
+                    { code: '5404', name: 'Beban Pengelolaan Sampah', description: 'Biaya pengelolaan sampah pasar' },
+                    { code: '5405', name: 'Beban Keamanan Pasar', description: 'Biaya keamanan area lapak' }
+                ]
+            },
+            lapangan: {
+                pendapatan: [
+                    { code: '4501', name: 'Pendapatan Sewa Lapangan Siang', description: 'Sewa lapangan jam 06:00-18:00' },
+                    { code: '4502', name: 'Pendapatan Sewa Lapangan Malam', description: 'Sewa lapangan jam 18:00-22:00' },
+                    { code: '4503', name: 'Pendapatan Sewa Turnamen', description: 'Sewa untuk event turnamen' },
+                    { code: '4504', name: 'Pendapatan Parkir', description: 'Biaya parkir pengunjung' }
+                ],
+                beban: [
+                    { code: '5501', name: 'Beban Listrik Lapangan', description: 'Biaya listrik lampu penerangan' },
+                    { code: '5502', name: 'Beban Perawatan Rumput', description: 'Biaya perawatan rumput lapangan' },
+                    { code: '5503', name: 'Beban Maintenance Gawang', description: 'Perbaikan gawang dan net' },
+                    { code: '5504', name: 'Beban Penjaga Lapangan', description: 'Gaji/honor penjaga lapangan' },
+                    { code: '5505', name: 'Beban Air Siram', description: 'Biaya air untuk siram rumput' }
+                ]
+            },
+            sampah: {
+                pendapatan: [
+                    { code: '4601', name: 'Pendapatan Retribusi Sampah', description: 'Retribusi pengangkutan sampah' },
+                    { code: '4602', name: 'Pendapatan Penjualan Kompos', description: 'Penjualan pupuk kompos' },
+                    { code: '4603', name: 'Pendapatan Daur Ulang', description: 'Penjualan barang daur ulang' },
+                    { code: '4604', name: 'Pendapatan Jasa Pengangkutan', description: 'Jasa angkut sampah khusus' }
+                ],
+                beban: [
+                    { code: '5601', name: 'Beban BBM Truk', description: 'Biaya bahan bakar truk sampah' },
+                    { code: '5602', name: 'Beban Gaji Petugas', description: 'Gaji petugas kebersihan' },
+                    { code: '5603', name: 'Beban Maintenance Truk', description: 'Service dan perbaikan truk' },
+                    { code: '5604', name: 'Beban Operasional TPS', description: 'Biaya operasional tempat pembuangan' },
+                    { code: '5605', name: 'Beban Peralatan Kebersihan', description: 'Pembelian sapu, kantong sampah, dll' }
+                ]
+            },
+            ayam: {
+                pendapatan: [
+                    { code: '4701', name: 'Pendapatan Penjualan Telur Grade A', description: 'Penjualan telur kualitas A' },
+                    { code: '4702', name: 'Pendapatan Penjualan Telur Grade B', description: 'Penjualan telur kualitas B' },
+                    { code: '4703', name: 'Pendapatan Penjualan Ayam Afkir', description: 'Penjualan ayam tidak produktif' },
+                    { code: '4704', name: 'Pendapatan Penjualan Kotoran', description: 'Penjualan kotoran ayam untuk pupuk' }
+                ],
+                beban: [
+                    { code: '5701', name: 'Beban Pakan Ayam', description: 'Biaya pakan konsentrat ayam' },
+                    { code: '5702', name: 'Beban Obat-obatan', description: 'Vitamin, vaksin, obat ayam' },
+                    { code: '5703', name: 'Beban Listrik Kandang', description: 'Biaya listrik exhaust fan, lampu' },
+                    { code: '5704', name: 'Beban Gaji Peternak', description: 'Gaji/honor peternak' },
+                    { code: '5705', name: 'Beban Maintenance Kandang', description: 'Perbaikan kandang dan peralatan' }
+                ]
+            }
+        };
+
+        // Unit-specific field configurations (updated)
+        const unitFields = {
+            internet: [
+                { id: 'bandwidth', label: 'Bandwidth Terpakai (%)', type: 'number' },
+                { id: 'downtime', label: 'Downtime (menit)', type: 'number' },
+                { id: 'pelangganAktif', label: 'Pelanggan Aktif', type: 'number' }
+            ],
+            toko: [
+                { id: 'stokBarang', label: 'Jumlah Item Terjual', type: 'number' },
+                { id: 'pelangganHarian', label: 'Jumlah Pembeli', type: 'number' },
+                { id: 'produkTerlaris', label: 'Produk Terlaris', type: 'text' }
+            ],
+            kios: [
+                { id: 'tingkatHunian', label: 'Tingkat Hunian (%)', type: 'number' },
+                { id: 'komplainPenyewa', label: 'Jumlah Komplain', type: 'number' },
+                { id: 'pembayaranSewa', label: 'Pembayaran Sewa Masuk (Rp)', type: 'number' }
+            ],
+            lapak: [
+                { id: 'lapakTerisi', label: 'Lapak Terisi', type: 'number' },
+                { id: 'pendapatanSewa', label: 'Pendapatan Sewa (Rp)', type: 'number' },
+                { id: 'kebersihanArea', label: 'Skor Kebersihan (1-10)', type: 'number' }
+            ],
+            lapangan: [
+                { id: 'jamSewa', label: 'Jam Penyewaan', type: 'number' },
+                { id: 'timPenyewa', label: 'Jumlah Tim/Grup', type: 'number' },
+                { id: 'kondisiRumput', label: 'Kondisi Rumput (1-10)', type: 'number' }
+            ],
+            sampah: [
+                { id: 'volumeSampah', label: 'Volume Sampah (kg)', type: 'number' },
+                { id: 'sampahDaur', label: 'Sampah Didaur Ulang (kg)', type: 'number' },
+                { id: 'ritPengangkutan', label: 'Jumlah Rit Angkut', type: 'number' }
+            ],
+            ayam: [
+                { id: 'produksiTelur', label: 'Produksi Telur (butir)', type: 'number' },
+                { id: 'ayamSakit', label: 'Ayam Sakit/Mati', type: 'number' },
+                { id: 'konsumsiPakan', label: 'Konsumsi Pakan (kg)', type: 'number' }
+            ]
+        };
+
+        // User credentials
+        const users = {
+            'direktur': { password: 'admin123', role: 'direktur', name: 'Direktur BUMDes' },
+            'internet': { password: 'unit123', role: 'unit', name: 'Unit Internet', unit: 'internet' },
+            'toko': { password: 'unit123', role: 'unit', name: 'Unit Toko BUMDes', unit: 'toko' },
+            'kios': { password: 'unit123', role: 'unit', name: 'Unit Penyewaan Kios', unit: 'kios' },
+            'lapak': { password: 'unit123', role: 'unit', name: 'Unit Lapak & K5', unit: 'lapak' },
+            'lapangan': { password: 'unit123', role: 'unit', name: 'Unit Penyewaan Lapangan', unit: 'lapangan' },
+            'sampah': { password: 'unit123', role: 'unit', name: 'Unit Pengelolaan Sampah', unit: 'sampah' },
+            'ayam': { password: 'unit123', role: 'unit', name: 'Unit Ayam Petelur', unit: 'ayam' }
+        };
+
+        // Set current date
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString('id-ID', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        // Login function
+        function handleLogin(event) {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (users[username] && users[username].password === password) {
+                currentUser = users[username];
+                currentUser.username = username;
+                
+                document.getElementById('loginModal').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                document.getElementById('userInfo').textContent = currentUser.name;
+                
+                setupNavigation();
+                showDefaultView();
+            } else {
+                alert('Username atau password salah!');
+            }
+        }
+
+        // Setup navigation based on user role
+        function setupNavigation() {
+            const menu = document.getElementById('navigationMenu');
+            menu.innerHTML = '';
+            
+            if (currentUser.role === 'direktur') {
+                // Direktur has full access
+                menu.innerHTML = `
+                    <button onclick="showUnit('summary')" class="unit-btn bg-gray-700 hover:bg-gray-800 text-white px-4 py-3 rounded-lg font-medium transition-colors">
+                        📈 Dashboard
+                    </button>
+                    <button onclick="showUnit('laporanKeuangan')" class="unit-btn bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-3 rounded-lg font-medium transition-colors">
+                        📊 Laporan Keuangan
+                    </button>
+                    <button onclick="showUnit('internet')" class="unit-btn bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-lg font-medium transition-colors">
+                        🌐 Unit Internet
+                    </button>
+                    <button onclick="showUnit('toko')" class="unit-btn bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-lg font-medium transition-colors">
+                        🏪 Toko BUMDes
+                    </button>
+                    <button onclick="showUnit('kios')" class="unit-btn bg-purple-500 hover:bg-purple-600 text-white px-4 py-3 rounded-lg font-medium transition-colors">
+                        🏬 Penyewaan Kios
+                    </button>
+                    <button onclick="showUnit('lapak')" class="unit-btn bg-orange-500 hover:bg-orange-600 text-white px-4 py-3 rounded-lg font-medium transition-colors">
+                        🛒 Lapak & K5
+                    </button>
+                    <button onclick="showUnit('lapangan')" class="unit-btn bg-red-500 hover:bg-red-600 text-white px-4 py-3 rounded-lg font-medium transition-colors">
+                        ⚽ Penyewaan Lapangan
+                    </button>
+                    <button onclick="showUnit('sampah')" class="unit-btn bg-teal-500 hover:bg-teal-600 text-white px-4 py-3 rounded-lg font-medium transition-colors">
+                        ♻️ Pengelolaan Sampah
+                    </button>
+                    <button onclick="showUnit('ayam')" class="unit-btn bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-3 rounded-lg font-medium transition-colors">
+                        🐔 Ayam Petelur
+                    </button>
+                `;
+            } else {
+                // Unit users can only input reports and view their own data
+                menu.innerHTML = `
+                    <button onclick="showInputForm()" class="unit-btn bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-lg font-medium transition-colors">
+                        📝 Input Laporan
+                    </button>
+                    <button onclick="showUnit('${currentUser.unit}')" class="unit-btn bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-lg font-medium transition-colors">
+                        📊 Lihat Data Unit
+                    </button>
+                `;
+            }
+        }
+
+        // Show default view based on role
+        function showDefaultView() {
+            if (currentUser.role === 'direktur') {
+                showUnit('summary');
+            } else {
+                showInputForm();
+            }
+        }
+
+        // Show input form
+        function showInputForm() {
+            // Hide all unit contents
+            const contents = document.querySelectorAll('.unit-content');
+            contents.forEach(content => content.classList.add('hidden'));
+            
+            // Show input form
+            document.getElementById('inputForm').classList.remove('hidden');
+            
+            // Update form titles
+            if (currentUser.role === 'unit') {
+                document.getElementById('dailyFormTitle').textContent = `📝 Input Laporan Harian ${currentUser.name}`;
+                document.getElementById('monthlyFormTitle').textContent = `📊 Input Laporan Bulanan ${currentUser.name}`;
+                
+                // Setup unit-specific fields
+                setupUnitSpecificFields();
+            }
+            
+            // Set default date to today
+            document.getElementById('tanggalHarian').value = new Date().toISOString().split('T')[0];
+            
+            // Load history
+            loadReportHistory();
+        }
+
+        // Switch between tabs
+        function switchTab(tabName) {
+            currentTab = tabName;
+            
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+            
+            // Show selected tab
+            document.getElementById(tabName + 'Form').classList.remove('hidden');
+            
+            // Update tab buttons
+            document.querySelectorAll('[id$="Tab"]').forEach(btn => {
+                btn.className = 'px-6 py-3 font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap';
+            });
+            document.getElementById(tabName + 'Tab').className = 'px-6 py-3 font-medium text-blue-600 border-b-2 border-blue-600 whitespace-nowrap';
+            
+            if (tabName === 'history') {
+                loadReportHistory();
+            } else if (tabName === 'asset') {
+                setupAssetForm();
+            } else if (tabName === 'coa') {
+                setupCOADisplay();
+            } else if (tabName === 'kasumum') {
+                setupKasUmumDisplay();
+            }
+        }
+
+        // Setup unit-specific fields
+        function setupUnitSpecificFields() {
+            const container = document.getElementById('unitSpecificFields');
+            if (!currentUser.unit || !unitFields[currentUser.unit]) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            const fields = unitFields[currentUser.unit];
+            let html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-6">';
+            
+            fields.forEach(field => {
+                html += `
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">${field.label}</label>
+                        <input type="${field.type}" id="${field.id}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // Submit daily report
+        function submitDailyReport(event) {
+            event.preventDefault();
+            
+            const formData = {
+                type: 'daily',
+                unit: currentUser.unit || 'direktur',
+                tanggal: document.getElementById('tanggalHarian').value,
+                shift: document.getElementById('shift').value,
+                pendapatan: parseInt(document.getElementById('pendapatanHarian').value),
+                pengeluaran: parseInt(document.getElementById('pengeluaranHarian').value),
+                jumlahTransaksi: parseInt(document.getElementById('jumlahTransaksi').value),
+                statusOperasional: document.getElementById('statusOperasional').value,
+                aktivitas: document.getElementById('aktivitasHarian').value,
+                kondisiPeralatan: document.getElementById('kondisiPeralatan').value,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Add unit-specific data
+            if (currentUser.unit && unitFields[currentUser.unit]) {
+                formData.unitSpecific = {};
+                unitFields[currentUser.unit].forEach(field => {
+                    const element = document.getElementById(field.id);
+                    if (element && element.value) {
+                        formData.unitSpecific[field.id] = field.type === 'number' ? 
+                            parseInt(element.value) : element.value;
+                    }
+                });
+            }
+            
+            // Save to localStorage
+            if (!dailyReports[formData.unit]) {
+                dailyReports[formData.unit] = [];
+            }
+            dailyReports[formData.unit].push(formData);
+            localStorage.setItem('bumdesDailyReports', JSON.stringify(dailyReports));
+            
+            alert('Laporan harian berhasil disimpan!');
+            resetDailyForm();
+            loadReportHistory();
+        }
+
+        // Submit monthly report
+        function submitMonthlyReport(event) {
+            event.preventDefault();
+            
+            const formData = {
+                type: 'monthly',
+                unit: currentUser.unit || 'direktur',
+                periode: document.getElementById('periode').value,
+                pendapatan: parseInt(document.getElementById('pendapatan').value),
+                biayaOperasional: parseInt(document.getElementById('biayaOperasional').value),
+                biayaMaintenance: parseInt(document.getElementById('biayaMaintenance').value),
+                asetLancar: parseInt(document.getElementById('asetLancar').value),
+                asetTetap: parseInt(document.getElementById('asetTetap').value),
+                hutang: parseInt(document.getElementById('hutang').value),
+                modal: parseInt(document.getElementById('modal').value),
+                catatan: document.getElementById('catatan').value,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Save to localStorage
+            if (!reportData[formData.unit]) {
+                reportData[formData.unit] = [];
+            }
+            reportData[formData.unit].push(formData);
+            localStorage.setItem('bumdesReports', JSON.stringify(reportData));
+            
+            // Update consolidated reports
+            updateConsolidatedReports();
+            
+            alert('Laporan bulanan berhasil disimpan!');
+            resetMonthlyForm();
+            loadReportHistory();
+        }
+
+        // Setup asset form
+        function setupAssetForm() {
+            document.getElementById('tanggalPembelian').value = new Date().toISOString().split('T')[0];
+            
+            // Add event listeners for automatic calculation
+            const jumlahUnit = document.getElementById('jumlahUnit');
+            const hargaUnit = document.getElementById('hargaUnit');
+            const totalHarga = document.getElementById('totalHarga');
+            
+            function calculateTotal() {
+                const jumlah = parseInt(jumlahUnit.value) || 0;
+                const harga = parseInt(hargaUnit.value) || 0;
+                totalHarga.value = jumlah * harga;
+            }
+            
+            jumlahUnit.addEventListener('input', calculateTotal);
+            hargaUnit.addEventListener('input', calculateTotal);
+        }
+
+        // Submit asset purchase
+        function submitAssetPurchase(event) {
+            event.preventDefault();
+            
+            const purchaseData = {
+                type: 'asset_purchase',
+                unit: currentUser.unit || 'direktur',
+                tanggal: document.getElementById('tanggalPembelian').value,
+                kategori: document.getElementById('kategoriAset').value,
+                namaPeralatan: document.getElementById('namaPeralatan').value,
+                jumlahUnit: parseInt(document.getElementById('jumlahUnit').value),
+                hargaUnit: parseInt(document.getElementById('hargaUnit').value),
+                totalHarga: parseInt(document.getElementById('totalHarga').value),
+                supplier: document.getElementById('supplier').value,
+                metodePembayaran: document.getElementById('metodePembayaran').value,
+                spesifikasi: document.getElementById('spesifikasi').value,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Save purchase record
+            if (!assetPurchases[purchaseData.unit]) {
+                assetPurchases[purchaseData.unit] = [];
+            }
+            assetPurchases[purchaseData.unit].push(purchaseData);
+            localStorage.setItem('bumdesAssetPurchases', JSON.stringify(assetPurchases));
+            
+            // Update consolidated assets automatically
+            if (purchaseData.kategori === 'tetap') {
+                consolidatedAssets.asetTetap += purchaseData.totalHarga;
+            } else if (purchaseData.kategori === 'lancar') {
+                consolidatedAssets.asetLancar += purchaseData.totalHarga;
+            }
+            
+            // Reduce cash
+            consolidatedAssets.kas -= purchaseData.totalHarga;
+            
+            // Save updated assets
+            localStorage.setItem('bumdesConsolidatedAssets', JSON.stringify(consolidatedAssets));
+            
+            // Update display
+            updateConsolidatedReports();
+            
+            // Show success message with details
+            const kategoriText = purchaseData.kategori === 'tetap' ? 'Aset Tetap' : 'Aset Lancar';
+            alert(`✅ Pembelian berhasil diproses!\n\n` +
+                  `📦 ${purchaseData.namaPeralatan} (${purchaseData.jumlahUnit} unit)\n` +
+                  `💰 Total: ${formatCurrency(purchaseData.totalHarga)}\n` +
+                  `📊 ${kategoriText} bertambah: ${formatCurrency(purchaseData.totalHarga)}\n` +
+                  `💸 Kas berkurang: ${formatCurrency(purchaseData.totalHarga)}\n\n` +
+                  `Neraca telah diupdate otomatis!`);
+            
+            resetAssetForm();
+            loadReportHistory();
+        }
+
+        // Reset forms
+        function resetDailyForm() {
+            document.getElementById('dailyReportForm').reset();
+            document.getElementById('tanggalHarian').value = new Date().toISOString().split('T')[0];
+        }
+
+        function resetMonthlyForm() {
+            document.getElementById('monthlyReportForm').reset();
+        }
+
+        function resetAssetForm() {
+            document.getElementById('assetPurchaseForm').reset();
+            document.getElementById('tanggalPembelian').value = new Date().toISOString().split('T')[0];
+        }
+
+        function resetSHUForm() {
+            document.getElementById('shuDistributionForm').reset();
+            document.getElementById('tanggalPembagian').value = new Date().toISOString().split('T')[0];
+            
+            // Reset preview
+            document.getElementById('previewModal').textContent = 'Rp 0';
+            document.getElementById('previewPades').textContent = 'Rp 0';
+            document.getElementById('previewInsentif').textContent = 'Rp 0';
+            document.getElementById('previewCSR').textContent = 'Rp 0';
+            document.getElementById('previewKapasitas').textContent = 'Rp 0';
+            document.getElementById('previewTotal').textContent = 'Rp 0';
+        }
+
+        // Calculate SHU Preview
+        function calculateSHUPreview() {
+            // Get current SHU from consolidated reports
+            let totalPendapatan = 0;
+            let totalBebanOperasional = 0;
+            let totalBebanMaintenance = 0;
+            
+            Object.keys(reportData).forEach(unit => {
+                const unitReports = reportData[unit];
+                if (unitReports.length > 0) {
+                    const latestReport = unitReports[unitReports.length - 1];
+                    totalPendapatan += latestReport.pendapatan;
+                    totalBebanOperasional += latestReport.biayaOperasional;
+                    totalBebanMaintenance += latestReport.biayaMaintenance;
+                }
+            });
+            
+            const shu = totalPendapatan - totalBebanOperasional - totalBebanMaintenance;
+            
+            // Calculate distributions
+            const modalTambahan = shu * 0.35;
+            const pades = shu * 0.30;
+            const insentifPengurus = shu * 0.20;
+            const csr = shu * 0.10;
+            const kapasitasPengurus = shu * 0.05;
+            const total = modalTambahan + pades + insentifPengurus + csr + kapasitasPengurus;
+            
+            // Update form
+            document.getElementById('shuAmount').value = shu;
+            
+            // Update preview
+            document.getElementById('previewModal').textContent = formatCurrency(modalTambahan);
+            document.getElementById('previewPades').textContent = formatCurrency(pades);
+            document.getElementById('previewInsentif').textContent = formatCurrency(insentifPengurus);
+            document.getElementById('previewCSR').textContent = formatCurrency(csr);
+            document.getElementById('previewKapasitas').textContent = formatCurrency(kapasitasPengurus);
+            document.getElementById('previewTotal').textContent = formatCurrency(total);
+        }
+
+        // Process SHU Distribution
+        function processSHUDistribution(event) {
+            event.preventDefault();
+            
+            const shuData = {
+                type: 'shu_distribution',
+                unit: 'bumdes',
+                periode: document.getElementById('shuPeriode').value,
+                shuAmount: parseInt(document.getElementById('shuAmount').value),
+                tanggalPembagian: document.getElementById('tanggalPembagian').value,
+                statusPersetujuan: document.getElementById('statusPersetujuan').value,
+                catatan: document.getElementById('catatanSHU').value,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Calculate distributions
+            shuData.distributions = {
+                modalTambahan: shuData.shuAmount * 0.35,
+                pades: shuData.shuAmount * 0.30,
+                insentifPengurus: shuData.shuAmount * 0.20,
+                csr: shuData.shuAmount * 0.10,
+                kapasitasPengurus: shuData.shuAmount * 0.05
+            };
+            
+            // Save SHU distribution record
+            if (!reportData['shu_distributions']) {
+                reportData['shu_distributions'] = [];
+            }
+            reportData['shu_distributions'].push(shuData);
+            localStorage.setItem('bumdesReports', JSON.stringify(reportData));
+            
+            // Update consolidated assets with additional capital
+            consolidatedAssets.asetLancar += shuData.distributions.modalTambahan;
+            localStorage.setItem('bumdesConsolidatedAssets', JSON.stringify(consolidatedAssets));
+            
+            // Update display
+            updateConsolidatedReports();
+            
+            // Show success message
+            alert(`✅ Pembagian SHU berhasil diproses!\n\n` +
+                  `📊 Total SHU: ${formatCurrency(shuData.shuAmount)}\n` +
+                  `💰 Penambahan Modal: ${formatCurrency(shuData.distributions.modalTambahan)}\n` +
+                  `🏛️ PADes ke Desa: ${formatCurrency(shuData.distributions.pades)}\n` +
+                  `👥 Insentif Pengurus: ${formatCurrency(shuData.distributions.insentifPengurus)}\n` +
+                  `🤝 CSR: ${formatCurrency(shuData.distributions.csr)}\n` +
+                  `📚 Peningkatan Kapasitas: ${formatCurrency(shuData.distributions.kapasitasPengurus)}\n\n` +
+                  `⚠️ Jangan lupa setor PADes ke Desa dalam 30 hari!`);
+            
+            resetSHUForm();
+            loadReportHistory();
+        }
+
+        // Load report history
+        function loadReportHistory() {
+            const historyList = document.getElementById('historyList');
+            if (!historyList) return;
+            
+            let allReports = [];
+            
+            // Combine daily, monthly reports, and asset purchases
+            if (currentUser.role === 'direktur') {
+                // Direktur can see all reports
+                Object.keys(dailyReports).forEach(unit => {
+                    allReports = allReports.concat(dailyReports[unit]);
+                });
+                Object.keys(reportData).forEach(unit => {
+                    allReports = allReports.concat(reportData[unit]);
+                });
+                Object.keys(assetPurchases).forEach(unit => {
+                    allReports = allReports.concat(assetPurchases[unit]);
+                });
+            } else {
+                // Unit users can only see their own reports
+                if (dailyReports[currentUser.unit]) {
+                    allReports = allReports.concat(dailyReports[currentUser.unit]);
+                }
+                if (reportData[currentUser.unit]) {
+                    allReports = allReports.concat(reportData[currentUser.unit]);
+                }
+                if (assetPurchases[currentUser.unit]) {
+                    allReports = allReports.concat(assetPurchases[currentUser.unit]);
+                }
+            }
+            
+            // Sort by timestamp (newest first)
+            allReports.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            // Apply filters
+            filterHistory();
+        }
+
+        // Filter history
+        function filterHistory() {
+            const filterType = document.getElementById('filterType').value;
+            const filterMonth = document.getElementById('filterMonth').value;
+            const historyList = document.getElementById('historyList');
+            
+            let allReports = [];
+            
+            // Get reports based on user role
+            if (currentUser.role === 'direktur') {
+                Object.keys(dailyReports).forEach(unit => {
+                    allReports = allReports.concat(dailyReports[unit]);
+                });
+                Object.keys(reportData).forEach(unit => {
+                    allReports = allReports.concat(reportData[unit]);
+                });
+                Object.keys(assetPurchases).forEach(unit => {
+                    allReports = allReports.concat(assetPurchases[unit]);
+                });
+            } else {
+                if (dailyReports[currentUser.unit]) {
+                    allReports = allReports.concat(dailyReports[currentUser.unit]);
+                }
+                if (reportData[currentUser.unit]) {
+                    allReports = allReports.concat(reportData[currentUser.unit]);
+                }
+                if (assetPurchases[currentUser.unit]) {
+                    allReports = allReports.concat(assetPurchases[currentUser.unit]);
+                }
+            }
+            
+            // Apply filters
+            let filteredReports = allReports;
+            
+            if (filterType !== 'all') {
+                filteredReports = filteredReports.filter(report => report.type === filterType);
+            }
+            
+            if (filterMonth) {
+                filteredReports = filteredReports.filter(report => {
+                    const reportDate = report.tanggal || report.periode;
+                    return reportDate && reportDate.startsWith(filterMonth);
+                });
+            }
+            
+            // Sort by timestamp
+            filteredReports.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            // Display reports
+            displayReportHistory(filteredReports);
+        }
+
+        // Display report history
+        function displayReportHistory(reports) {
+            const historyList = document.getElementById('historyList');
+            
+            if (reports.length === 0) {
+                historyList.innerHTML = '<p class="text-gray-500 text-center py-8">Belum ada laporan tersimpan</p>';
+                return;
+            }
+            
+            let html = '';
+            reports.forEach(report => {
+                const date = new Date(report.timestamp).toLocaleDateString('id-ID');
+                const time = new Date(report.timestamp).toLocaleTimeString('id-ID');
+                const unitName = users[report.unit] ? users[report.unit].name : report.unit;
+                
+                if (report.type === 'asset_purchase') {
+                    // Asset purchase display
+                    html += `
+                        <div class="bg-gray-50 rounded-lg p-4 border">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <h4 class="font-semibold text-gray-800">
+                                        🛒 Pembelian Aset - ${unitName}
+                                    </h4>
+                                    <p class="text-sm text-gray-600">
+                                        ${report.tanggal} | Disimpan: ${date} ${time}
+                                    </p>
+                                </div>
+                                <span class="px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-800">
+                                    Pembelian Aset
+                                </span>
+                            </div>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                <div>
+                                    <span class="text-gray-600">Peralatan:</span>
+                                    <p class="font-medium">${report.namaPeralatan}</p>
+                                </div>
+                                <div>
+                                    <span class="text-gray-600">Jumlah:</span>
+                                    <p class="font-medium">${report.jumlahUnit} unit</p>
+                                </div>
+                                <div>
+                                    <span class="text-gray-600">Total Harga:</span>
+                                    <p class="font-medium">${formatCurrency(report.totalHarga)}</p>
+                                </div>
+                                <div>
+                                    <span class="text-gray-600">Kategori:</span>
+                                    <p class="font-medium">${report.kategori === 'tetap' ? 'Aset Tetap' : 'Aset Lancar'}</p>
+                                </div>
+                            </div>
+                            <div class="mt-3 pt-3 border-t">
+                                <div class="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <span class="text-gray-600">Supplier:</span>
+                                        <p class="font-medium">${report.supplier || '-'}</p>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-600">Pembayaran:</span>
+                                        <p class="font-medium">${report.metodePembayaran}</p>
+                                    </div>
+                                </div>
+                                ${report.spesifikasi ? `
+                                    <div class="mt-2">
+                                        <span class="text-gray-600 text-sm">Spesifikasi:</span>
+                                        <p class="text-sm text-gray-700">${report.spesifikasi}</p>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // Regular report display
+                    html += `
+                        <div class="bg-gray-50 rounded-lg p-4 border">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <h4 class="font-semibold text-gray-800">
+                                        ${report.type === 'daily' ? '📅 Laporan Harian' : '📊 Laporan Bulanan'} - ${unitName}
+                                    </h4>
+                                    <p class="text-sm text-gray-600">
+                                        ${report.type === 'daily' ? report.tanggal : report.periode} | 
+                                        Disimpan: ${date} ${time}
+                                    </p>
+                                </div>
+                                <span class="px-2 py-1 text-xs rounded-full ${report.type === 'daily' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}">
+                                    ${report.type === 'daily' ? 'Harian' : 'Bulanan'}
+                                </span>
+                            </div>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                <div>
+                                    <span class="text-gray-600">Pendapatan:</span>
+                                    <p class="font-medium">${formatCurrency(report.pendapatan)}</p>
+                                </div>
+                                ${report.type === 'daily' ? `
+                                    <div>
+                                        <span class="text-gray-600">Transaksi:</span>
+                                        <p class="font-medium">${report.jumlahTransaksi}</p>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-600">Status:</span>
+                                        <p class="font-medium">${report.statusOperasional}</p>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-600">Shift:</span>
+                                        <p class="font-medium">${report.shift}</p>
+                                    </div>
+                                ` : `
+                                    <div>
+                                        <span class="text-gray-600">Biaya Operasional:</span>
+                                        <p class="font-medium">${formatCurrency(report.biayaOperasional)}</p>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-600">Biaya Maintenance:</span>
+                                        <p class="font-medium">${formatCurrency(report.biayaMaintenance)}</p>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-600">Laba:</span>
+                                        <p class="font-medium">${formatCurrency(report.pendapatan - report.biayaOperasional - report.biayaMaintenance)}</p>
+                                    </div>
+                                `}
+                            </div>
+                            ${report.aktivitas || report.catatan ? `
+                                <div class="mt-3 pt-3 border-t">
+                                    <p class="text-sm text-gray-700">${report.aktivitas || report.catatan}</p>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }
+            });
+            
+            historyList.innerHTML = html;
+        }
+
+        // Update consolidated reports
+        function updateConsolidatedReports() {
+            let totalPendapatan = 0;
+            let totalBebanOperasional = 0;
+            let totalBebanMaintenance = 0;
+            let totalHutang = 0;
+            let totalModal = 0;
+            
+            // Calculate totals from all units
+            Object.keys(reportData).forEach(unit => {
+                const unitReports = reportData[unit];
+                if (unitReports.length > 0) {
+                    const latestReport = unitReports[unitReports.length - 1];
+                    totalPendapatan += latestReport.pendapatan;
+                    totalBebanOperasional += latestReport.biayaOperasional;
+                    totalBebanMaintenance += latestReport.biayaMaintenance;
+                    totalHutang += latestReport.hutang;
+                    totalModal += latestReport.modal;
+                }
+            });
+            
+            // Calculate SHU (Sisa Hasil Usaha)
+            const shu = totalPendapatan - totalBebanOperasional - totalBebanMaintenance;
+            
+            // Use consolidated assets (updated by asset purchases)
+            const totalAsetLancar = consolidatedAssets.asetLancar;
+            const totalAsetTetap = consolidatedAssets.asetTetap;
+            
+            // Update display
+            document.getElementById('totalPendapatan').textContent = formatCurrency(totalPendapatan);
+            document.getElementById('totalBebanOperasional').textContent = formatCurrency(totalBebanOperasional);
+            document.getElementById('totalBebanMaintenance').textContent = formatCurrency(totalBebanMaintenance);
+            document.getElementById('totalBeban').textContent = formatCurrency(totalBebanOperasional + totalBebanMaintenance);
+            document.getElementById('labaBersih').textContent = formatCurrency(shu);
+            
+            document.getElementById('totalAsetLancar').textContent = formatCurrency(totalAsetLancar);
+            document.getElementById('totalAsetTetap').textContent = formatCurrency(totalAsetTetap);
+            document.getElementById('totalAset').textContent = formatCurrency(totalAsetLancar + totalAsetTetap);
+            document.getElementById('totalHutang').textContent = formatCurrency(totalHutang);
+            document.getElementById('totalModal').textContent = formatCurrency(totalModal);
+            
+            // Calculate SHU distribution according to AD/ART
+            updateSHUDistribution(shu);
+            
+            const labaDitahan = shu * 0.35; // 35% goes to additional capital (retained earnings)
+            document.getElementById('labaDitahan').textContent = formatCurrency(labaDitahan);
+            document.getElementById('totalEkuitas').textContent = formatCurrency(totalModal + labaDitahan);
+        }
+
+        // Update SHU Distribution according to AD/ART
+        function updateSHUDistribution(shu) {
+            // Calculate distribution percentages
+            const modalTambahan = shu * 0.35;      // 35% - Penambahan Modal
+            const pades = shu * 0.30;              // 30% - PADes (Pendapatan Asli Desa)
+            const insentifPengurus = shu * 0.20;   // 20% - Insentif Pengurus
+            const csr = shu * 0.10;                // 10% - CSR
+            const kapasitasPengurus = shu * 0.05;  // 5% - Peningkatan Kapasitas Pengurus
+            
+            // Update SHU distribution display
+            const shuTotalEl = document.getElementById('shuTotal');
+            const modalTambahanEl = document.getElementById('modalTambahan');
+            const padesEl = document.getElementById('pades');
+            const insentifPengurusEl = document.getElementById('insentifPengurus');
+            const csrEl = document.getElementById('csr');
+            const kapasitasPengurusEl = document.getElementById('kapasitasPengurus');
+            const totalAlokasiEl = document.getElementById('totalAlokasi');
+            const shuTersediaEl = document.getElementById('shuTersedia');
+            const selisihShuEl = document.getElementById('selisihShu');
+            const padesAmountEl = document.getElementById('padesAmount');
+            
+            if (shuTotalEl) shuTotalEl.textContent = formatCurrency(shu);
+            if (modalTambahanEl) modalTambahanEl.textContent = formatCurrency(modalTambahan);
+            if (padesEl) padesEl.textContent = formatCurrency(pades);
+            if (insentifPengurusEl) insentifPengurusEl.textContent = formatCurrency(insentifPengurus);
+            if (csrEl) csrEl.textContent = formatCurrency(csr);
+            if (kapasitasPengurusEl) kapasitasPengurusEl.textContent = formatCurrency(kapasitasPengurus);
+            if (padesAmountEl) padesAmountEl.textContent = formatCurrency(pades);
+            
+            // Verification
+            const totalAlokasi = modalTambahan + pades + insentifPengurus + csr + kapasitasPengurus;
+            const selisih = shu - totalAlokasi;
+            
+            if (totalAlokasiEl) totalAlokasiEl.textContent = formatCurrency(totalAlokasi);
+            if (shuTersediaEl) shuTersediaEl.textContent = formatCurrency(shu);
+            if (selisihShuEl) selisihShuEl.textContent = formatCurrency(selisih);
+            
+            // Initialize SHU chart if visible
+            setTimeout(() => initSHUChart(modalTambahan, pades, insentifPengurus, csr, kapasitasPengurus), 100);
+        }
+
+        // Initialize SHU distribution chart
+        function initSHUChart(modalTambahan, pades, insentifPengurus, csr, kapasitasPengurus) {
+            const ctx = document.getElementById('shuChart');
+            if (!ctx) return;
+            
+            // Destroy existing chart if it exists
+            if (window.shuChartInstance) {
+                window.shuChartInstance.destroy();
+            }
+            
+            window.shuChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: [
+                        'Penambahan Modal (35%)',
+                        'PADes (30%)',
+                        'Insentif Pengurus (20%)',
+                        'CSR (10%)',
+                        'Peningkatan Kapasitas (5%)'
+                    ],
+                    datasets: [{
+                        data: [modalTambahan, pades, insentifPengurus, csr, kapasitasPengurus],
+                        backgroundColor: [
+                            '#10B981', // Green
+                            '#3B82F6', // Blue
+                            '#8B5CF6', // Purple
+                            '#F59E0B', // Orange
+                            '#EAB308'  // Yellow
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                usePointStyle: true,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = formatCurrency(context.parsed);
+                                    return `${label}: ${value}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Format currency
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(amount);
+        }
+
+        // Logout function
+        function logout() {
+            currentUser = null;
+            document.getElementById('loginModal').style.display = 'flex';
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        // Show unit function
+        function showUnit(unitName) {
+            // Hide all unit contents
+            const contents = document.querySelectorAll('.unit-content');
+            contents.forEach(content => content.classList.add('hidden'));
+            
+            // Show selected unit
+            document.getElementById(unitName).classList.remove('hidden');
+            
+            // Update button states
+            const buttons = document.querySelectorAll('.unit-btn');
+            buttons.forEach(btn => btn.classList.remove('ring-2', 'ring-white'));
+            event.target.classList.add('ring-2', 'ring-white');
+            
+            // Initialize chart if summary is selected
+            if (unitName === 'summary') {
+                setTimeout(initChart, 100);
+            }
+        }
+
+        // Initialize revenue chart
+        function initChart() {
+            const ctx = document.getElementById('revenueChart');
+            if (!ctx) return;
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Internet', 'Toko BUMDes', 'Kios', 'Lapak & K5', 'Lapangan', 'Sampah', 'Ayam Petelur'],
+                    datasets: [{
+                        label: 'Pendapatan (Juta Rp)',
+                        data: [12.5, 8.75, 6.0, 3.3, 4.5, 5.2, 15.5],
+                        backgroundColor: [
+                            '#3B82F6', '#10B981', '#8B5CF6', '#F59E0B',
+                            '#EF4444', '#14B8A6', '#F59E0B'
+                        ],
+                        borderRadius: 8,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Pendapatan (Juta Rp)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Export functions
+        function exportToPDF() {
+            if (currentUser.role !== 'direktur') {
+                alert('Hanya Direktur yang dapat mengexport laporan!');
+                return;
+            }
+            
+            // Create PDF content
+            const pdfContent = generatePDFContent();
+            
+            // Create and download PDF (simulation)
+            const blob = new Blob([pdfContent], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Laporan_BUMDes_Cikahuripan_${new Date().toISOString().split('T')[0]}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            alert('Laporan PDF berhasil diunduh! (Format demo dalam .txt)');
+        }
+
+        function exportToExcel() {
+            if (currentUser.role !== 'direktur') {
+                alert('Hanya Direktur yang dapat mengexport laporan!');
+                return;
+            }
+            
+            // Create Excel content (CSV format)
+            const csvContent = generateCSVContent();
+            
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Data_BUMDes_Cikahuripan_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            alert('Data Excel berhasil diunduh!');
+        }
+
+        function printReport() {
+            if (currentUser.role !== 'direktur') {
+                alert('Hanya Direktur yang dapat mencetak laporan!');
+                return;
+            }
+            
+            // Create print-friendly version
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(generatePrintContent());
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        function sendEmail() {
+            if (currentUser.role !== 'direktur') {
+                alert('Hanya Direktur yang dapat mengirim laporan!');
+                return;
+            }
+            
+            const emailBody = generateEmailContent();
+            const subject = `Laporan BUMDes Cikahuripan - ${new Date().toLocaleDateString('id-ID')}`;
+            
+            // Open email client (demo)
+            window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailBody)}`);
+        }
+
+        // Generate PDF content
+        function generatePDFContent() {
+            const currentDate = new Date().toLocaleDateString('id-ID');
+            
+            return `
+LAPORAN KEUANGAN BUMDES CIKAHURIPAN
+Tanggal: ${currentDate}
+
+=== NERACA ===
+ASET:
+- Aset Lancar: ${document.getElementById('totalAsetLancar').textContent}
+- Aset Tetap: ${document.getElementById('totalAsetTetap').textContent}
+- Total Aset: ${document.getElementById('totalAset').textContent}
+
+KEWAJIBAN:
+- Hutang Jangka Pendek: ${document.getElementById('totalHutang').textContent}
+
+EKUITAS:
+- Modal Dasar: ${document.getElementById('totalModal').textContent}
+- Laba Ditahan: ${document.getElementById('labaDitahan').textContent}
+- Total Ekuitas: ${document.getElementById('totalEkuitas').textContent}
+
+=== LABA RUGI ===
+PENDAPATAN:
+- Pendapatan Usaha: ${document.getElementById('totalPendapatan').textContent}
+
+BEBAN:
+- Beban Operasional: ${document.getElementById('totalBebanOperasional').textContent}
+- Beban Maintenance: ${document.getElementById('totalBebanMaintenance').textContent}
+- Total Beban: ${document.getElementById('totalBeban').textContent}
+
+LABA BERSIH: ${document.getElementById('labaBersih').textContent}
+
+=== ARUS KAS ===
+- Kas Bersih Operasi: Rp 34.750.000
+- Kas Bersih Investasi: (Rp 15.000.000)
+- Kas Bersih Pendanaan: Rp 10.000.000
+- Kenaikan Kas Bersih: Rp 29.750.000
+
+Disiapkan oleh: ${currentUser.name}
+Tanggal: ${currentDate}
+            `;
+        }
+
+        // Generate CSV content
+        function generateCSVContent() {
+            let csv = 'Unit,Periode,Pendapatan,Biaya Operasional,Biaya Maintenance,Aset Lancar,Aset Tetap,Hutang,Modal\n';
+            
+            Object.keys(reportData).forEach(unit => {
+                const unitReports = reportData[unit];
+                unitReports.forEach(report => {
+                    csv += `${unit},${report.periode},${report.pendapatan},${report.biayaOperasional},${report.biayaMaintenance},${report.asetLancar},${report.asetTetap},${report.hutang},${report.modal}\n`;
+                });
+            });
+            
+            return csv;
+        }
+
+        // Generate print content
+        function generatePrintContent() {
+            const currentDate = new Date().toLocaleDateString('id-ID');
+            
+            // Get current values safely
+            const getElementText = (id) => {
+                const element = document.getElementById(id);
+                return element ? element.textContent : 'Rp 0';
+            };
+            
+            return `
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Laporan BUMDes Cikahuripan</title>
+    <meta charset="UTF-8">
+    <style>
+        body { 
+            font-family: 'Times New Roman', serif; 
+            margin: 20px; 
+            line-height: 1.4;
+            color: #333;
+        }
+        .header { 
+            text-align: center; 
+            margin-bottom: 30px; 
+            border-bottom: 2px solid #333;
+            padding-bottom: 15px;
+        }
+        .header h1 { 
+            margin: 0; 
+            font-size: 18px; 
+            font-weight: bold;
+        }
+        .header p { 
+            margin: 5px 0; 
+            font-size: 12px;
+        }
+        .section { 
+            margin-bottom: 25px; 
+            page-break-inside: avoid;
+        }
+        .section h2 { 
+            font-size: 14px; 
+            margin-bottom: 10px; 
+            background-color: #f5f5f5; 
+            padding: 5px; 
+            border-left: 4px solid #333;
+        }
+        .table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            font-size: 11px;
+            margin-bottom: 15px;
+        }
+        .table th, .table td { 
+            border: 1px solid #ddd; 
+            padding: 6px 8px; 
+            text-align: left; 
+        }
+        .table th { 
+            background-color: #f8f9fa; 
+            font-weight: bold;
+        }
+        .table .number { 
+            text-align: right; 
+        }
+        .total-row { 
+            font-weight: bold; 
+            background-color: #f0f0f0;
+        }
+        .signature { 
+            margin-top: 40px; 
+            display: flex; 
+            justify-content: space-between;
+        }
+        .signature div { 
+            text-align: center; 
+            width: 200px;
+        }
+        .signature-line { 
+            border-top: 1px solid #333; 
+            margin-top: 60px; 
+            padding-top: 5px;
+        }
+        @media print { 
+            body { margin: 15px; }
+            .section { page-break-inside: avoid; }
+        }
+        .kas-info {
+            background-color: #e8f4fd;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 12px;
+        }
+        .shu-section {
+            background-color: #fff3cd;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>LAPORAN KEUANGAN BUMDES CIKAHURIPAN</h1>
+        <p>Badan Usaha Milik Desa Cikahuripan</p>
+        <p>Periode: ${currentDate}</p>
+    </div>
+    
+    <div class="kas-info">
+        <strong>💰 Informasi Kas Umum BUMDes:</strong><br>
+        Saldo Kas Umum saat ini: <strong>${formatCurrency(kasUmumSaldo)}</strong>
+    </div>
+    
+    <div class="section">
+        <h2>📊 NERACA KONSOLIDASI</h2>
+        <table class="table">
+            <thead>
+                <tr><th colspan="2" style="text-align: center; background-color: #333; color: white;">ASET</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Kas dan Setara Kas</td><td class="number">${formatCurrency(kasUmumSaldo)}</td></tr>
+                <tr><td>Aset Lancar Lainnya</td><td class="number">${getElementText('totalAsetLancar')}</td></tr>
+                <tr><td>Aset Tetap</td><td class="number">${getElementText('totalAsetTetap')}</td></tr>
+                <tr class="total-row"><td><strong>TOTAL ASET</strong></td><td class="number"><strong>${getElementText('totalAset')}</strong></td></tr>
+            </tbody>
+        </table>
+        
+        <table class="table">
+            <thead>
+                <tr><th colspan="2" style="text-align: center; background-color: #333; color: white;">KEWAJIBAN & EKUITAS</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Hutang Jangka Pendek</td><td class="number">${getElementText('totalHutang')}</td></tr>
+                <tr><td>Modal Dasar</td><td class="number">${getElementText('totalModal')}</td></tr>
+                <tr><td>Laba Ditahan</td><td class="number">${getElementText('labaDitahan')}</td></tr>
+                <tr class="total-row"><td><strong>TOTAL KEWAJIBAN & EKUITAS</strong></td><td class="number"><strong>${getElementText('totalEkuitas')}</strong></td></tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="section">
+        <h2>💰 LAPORAN LABA RUGI</h2>
+        <table class="table">
+            <tbody>
+                <tr><td><strong>PENDAPATAN USAHA</strong></td><td class="number"><strong>${getElementText('totalPendapatan')}</strong></td></tr>
+                <tr><td style="padding-left: 20px;">Pendapatan dari Unit Usaha</td><td class="number">${getElementText('totalPendapatan')}</td></tr>
+                <tr><td><strong>BEBAN USAHA</strong></td><td class="number"></td></tr>
+                <tr><td style="padding-left: 20px;">Beban Operasional</td><td class="number">${getElementText('totalBebanOperasional')}</td></tr>
+                <tr><td style="padding-left: 20px;">Beban Maintenance</td><td class="number">${getElementText('totalBebanMaintenance')}</td></tr>
+                <tr><td style="padding-left: 20px;"><strong>Total Beban</strong></td><td class="number"><strong>${getElementText('totalBeban')}</strong></td></tr>
+                <tr class="total-row"><td><strong>LABA BERSIH (SHU)</strong></td><td class="number"><strong>${getElementText('labaBersih')}</strong></td></tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="section shu-section">
+        <h2>📋 PEMBAGIAN SISA HASIL USAHA (SHU) SESUAI AD/ART</h2>
+        <table class="table">
+            <tbody>
+                <tr><td>Penambahan Modal (35%)</td><td class="number">${getElementText('modalTambahan')}</td></tr>
+                <tr><td>PADes ke Desa (30%)</td><td class="number">${getElementText('pades')}</td></tr>
+                <tr><td>Insentif Pengurus (20%)</td><td class="number">${getElementText('insentifPengurus')}</td></tr>
+                <tr><td>CSR - Corporate Social Responsibility (10%)</td><td class="number">${getElementText('csr')}</td></tr>
+                <tr><td>Peningkatan Kapasitas Pengurus (5%)</td><td class="number">${getElementText('kapasitasPengurus')}</td></tr>
+                <tr class="total-row"><td><strong>TOTAL ALOKASI SHU</strong></td><td class="number"><strong>${getElementText('labaBersih')}</strong></td></tr>
+            </tbody>
+        </table>
+        <p style="font-size: 10px; font-style: italic; margin-top: 10px;">
+            * Pembagian SHU sesuai dengan Anggaran Dasar dan Anggaran Rumah Tangga BUMDes Cikahuripan<br>
+            * PADes wajib disetor ke Rekening Desa paling lambat 30 hari setelah pembagian SHU
+        </p>
+    </div>
+    
+    <div class="section">
+        <h2>💸 RINGKASAN ARUS KAS</h2>
+        <table class="table">
+            <tbody>
+                <tr><td><strong>Arus Kas dari Aktivitas Operasi</strong></td><td class="number"></td></tr>
+                <tr><td style="padding-left: 20px;">Penerimaan dari Pelanggan</td><td class="number">${getElementText('totalPendapatan')}</td></tr>
+                <tr><td style="padding-left: 20px;">Pembayaran Beban Operasional</td><td class="number">(${getElementText('totalBeban')})</td></tr>
+                <tr><td style="padding-left: 20px;"><strong>Kas Bersih dari Aktivitas Operasi</strong></td><td class="number"><strong>${getElementText('labaBersih')}</strong></td></tr>
+                <tr><td><strong>Arus Kas dari Aktivitas Investasi</strong></td><td class="number"></td></tr>
+                <tr><td style="padding-left: 20px;">Pembelian Aset</td><td class="number">(Rp 15.000.000)</td></tr>
+                <tr><td><strong>Arus Kas dari Aktivitas Pendanaan</strong></td><td class="number"></td></tr>
+                <tr><td style="padding-left: 20px;">Penyertaan Modal</td><td class="number">Rp 10.000.000</td></tr>
+                <tr><td style="padding-left: 20px;">Setor PADes</td><td class="number">(${getElementText('pades')})</td></tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="section">
+        <h2>📝 CATATAN LAPORAN</h2>
+        <ol style="font-size: 11px;">
+            <li>Laporan keuangan ini disusun berdasarkan data dari Sistem CMMS BUMDes Cikahuripan</li>
+            <li>Pembagian SHU mengikuti ketentuan Anggaran Dasar dan Anggaran Rumah Tangga BUMDes</li>
+            <li>PADes (Pendapatan Asli Desa) wajib disetor sesuai peraturan yang berlaku</li>
+            <li>Laporan ini telah direview dan disetujui oleh Direktur BUMDes</li>
+            <li>Sistem pencatatan menggunakan CMMS (Computerized Maintenance Management System)</li>
+        </ol>
+    </div>
+    
+    <div class="signature">
+        <div>
+            <p>Mengetahui,<br><strong>Kepala Desa Cikahuripan</strong></p>
+            <div class="signature-line">
+                <p>(_______________________)</p>
+            </div>
+        </div>
+        <div>
+            <p>Disiapkan oleh,<br><strong>${currentUser.name}</strong></p>
+            <div class="signature-line">
+                <p>Tanggal: ${currentDate}</p>
+            </div>
+        </div>
+    </div>
+    
+    <div style="margin-top: 30px; text-align: center; font-size: 10px; color: #666;">
+        <p>Dokumen ini digenerate otomatis oleh Sistem CMMS BUMDes Cikahuripan v1.0</p>
+    </div>
+</body>
+</html>
+            `;
+        }
+
+        // Generate email content
+        function generateEmailContent() {
+            return `
+Yth. Kepala Desa,
+
+Berikut adalah ringkasan laporan keuangan BUMDes Cikahuripan:
+
+RINGKASAN KEUANGAN:
+- Total Pendapatan: ${document.getElementById('totalPendapatan').textContent}
+- Total Beban: ${document.getElementById('totalBeban').textContent}
+- Laba Bersih: ${document.getElementById('labaBersih').textContent}
+- Total Aset: ${document.getElementById('totalAset').textContent}
+
+Laporan lengkap dapat diakses melalui sistem CMMS BUMDes.
+
+Hormat kami,
+${currentUser.name}
+BUMDes Cikahuripan
+            `;
+        }
+
+        // Setup COA Display
+        function setupCOADisplay() {
+            const coaDisplay = document.getElementById('coaDisplay');
+            const coaFormTitle = document.getElementById('coaFormTitle');
+            
+            if (currentUser.role === 'unit' && currentUser.unit && unitCOA[currentUser.unit]) {
+                const unitName = currentUser.name;
+                coaFormTitle.textContent = `📚 Chart of Accounts (COA) - ${unitName}`;
+                
+                const coa = unitCOA[currentUser.unit];
+                let html = '<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">';
+                
+                // Pendapatan
+                html += `
+                    <div class="bg-green-50 rounded-lg p-4">
+                        <h4 class="font-semibold text-green-800 mb-3">💰 Akun Pendapatan</h4>
+                        <div class="space-y-2">
+                `;
+                coa.pendapatan.forEach(akun => {
+                    html += `
+                        <div class="bg-white p-3 rounded border">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <span class="font-mono text-sm text-gray-600">${akun.code}</span>
+                                    <h5 class="font-medium text-gray-800">${akun.name}</h5>
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-600 mt-1">${akun.description}</p>
+                        </div>
+                    `;
+                });
+                html += '</div></div>';
+                
+                // Beban
+                html += `
+                    <div class="bg-red-50 rounded-lg p-4">
+                        <h4 class="font-semibold text-red-800 mb-3">💸 Akun Beban</h4>
+                        <div class="space-y-2">
+                `;
+                coa.beban.forEach(akun => {
+                    html += `
+                        <div class="bg-white p-3 rounded border">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <span class="font-mono text-sm text-gray-600">${akun.code}</span>
+                                    <h5 class="font-medium text-gray-800">${akun.name}</h5>
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-600 mt-1">${akun.description}</p>
+                        </div>
+                    `;
+                });
+                html += '</div></div>';
+                html += '</div>';
+                
+                coaDisplay.innerHTML = html;
+                
+                // Set default date
+                document.getElementById('coaTanggal').value = new Date().toISOString().split('T')[0];
+                
+            } else if (currentUser.role === 'direktur') {
+                coaFormTitle.textContent = '📚 Chart of Accounts (COA) - Semua Unit';
+                
+                let html = '<div class="space-y-6">';
+                Object.keys(unitCOA).forEach(unitKey => {
+                    const unitName = users[unitKey] ? users[unitKey].name : unitKey;
+                    const coa = unitCOA[unitKey];
+                    
+                    html += `
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-gray-800 mb-4">${unitName}</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="bg-green-50 rounded p-3">
+                                    <h5 class="font-medium text-green-800 mb-2">Pendapatan</h5>
+                                    <div class="space-y-1">
+                    `;
+                    coa.pendapatan.forEach(akun => {
+                        html += `<div class="text-sm"><span class="font-mono text-xs">${akun.code}</span> ${akun.name}</div>`;
+                    });
+                    html += `
+                                    </div>
+                                </div>
+                                <div class="bg-red-50 rounded p-3">
+                                    <h5 class="font-medium text-red-800 mb-2">Beban</h5>
+                                    <div class="space-y-1">
+                    `;
+                    coa.beban.forEach(akun => {
+                        html += `<div class="text-sm"><span class="font-mono text-xs">${akun.code}</span> ${akun.name}</div>`;
+                    });
+                    html += '</div></div></div></div>';
+                });
+                html += '</div>';
+                
+                coaDisplay.innerHTML = html;
+                
+                // Hide transaction form for direktur
+                document.getElementById('coaTransactionForm').style.display = 'none';
+            } else {
+                coaDisplay.innerHTML = '<p class="text-gray-500 text-center py-8">COA tidak tersedia untuk unit ini</p>';
+                document.getElementById('coaTransactionForm').style.display = 'none';
+            }
+        }
+
+        // Update COA Options
+        function updateCOAOptions() {
+            const jenis = document.getElementById('coaJenis').value;
+            const akunSelect = document.getElementById('coaAkun');
+            
+            akunSelect.innerHTML = '<option value="">Pilih Akun COA</option>';
+            
+            if (currentUser.role === 'unit' && currentUser.unit && unitCOA[currentUser.unit] && jenis) {
+                const coa = unitCOA[currentUser.unit];
+                const accounts = coa[jenis] || [];
+                
+                accounts.forEach(akun => {
+                    const option = document.createElement('option');
+                    option.value = akun.code;
+                    option.textContent = `${akun.code} - ${akun.name}`;
+                    option.dataset.description = akun.description;
+                    akunSelect.appendChild(option);
+                });
+            }
+        }
+
+        // Submit COA Transaction
+        function submitCOATransaction(event) {
+            event.preventDefault();
+            
+            const transactionData = {
+                type: 'coa_transaction',
+                unit: currentUser.unit,
+                tanggal: document.getElementById('coaTanggal').value,
+                jenis: document.getElementById('coaJenis').value,
+                akunCode: document.getElementById('coaAkun').value,
+                akunName: document.getElementById('coaAkun').selectedOptions[0].textContent,
+                jumlah: parseInt(document.getElementById('coaJumlah').value),
+                keterangan: document.getElementById('coaKeterangan').value,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Save transaction
+            if (!coaTransactions[transactionData.unit]) {
+                coaTransactions[transactionData.unit] = [];
+            }
+            coaTransactions[transactionData.unit].push(transactionData);
+            localStorage.setItem('bumdesCOATransactions', JSON.stringify(coaTransactions));
+            
+            alert(`✅ Transaksi COA berhasil disimpan!\n\n` +
+                  `📅 Tanggal: ${transactionData.tanggal}\n` +
+                  `📊 Akun: ${transactionData.akunName}\n` +
+                  `💰 Jumlah: ${formatCurrency(transactionData.jumlah)}\n` +
+                  `📝 Keterangan: ${transactionData.keterangan}`);
+            
+            resetCOAForm();
+        }
+
+        // Reset COA Form
+        function resetCOAForm() {
+            document.getElementById('coaTransactionForm').reset();
+            document.getElementById('coaTanggal').value = new Date().toISOString().split('T')[0];
+            document.getElementById('coaAkun').innerHTML = '<option value="">Pilih Akun COA</option>';
+        }
+
+        // Setup Kas Umum Display
+        function setupKasUmumDisplay() {
+            // Update current balance
+            document.getElementById('currentKasUmum').textContent = formatCurrency(kasUmumSaldo);
+            
+            // Set default date
+            document.getElementById('kasTanggal').value = new Date().toISOString().split('T')[0];
+            
+            // Update last update time
+            if (kasUmumTransactions.length > 0) {
+                const lastTransaction = kasUmumTransactions[kasUmumTransactions.length - 1];
+                document.getElementById('lastKasUpdate').textContent = new Date(lastTransaction.timestamp).toLocaleString('id-ID');
+            }
+            
+            // Load transaction history
+            loadKasUmumHistory();
+        }
+
+        // Submit Kas Umum Transaction
+        function submitKasUmumTransaction(event) {
+            event.preventDefault();
+            
+            const jenis = document.getElementById('kasJenis').value;
+            const jumlah = parseInt(document.getElementById('kasJumlah').value);
+            
+            // Determine if it's income or expense
+            const incomeTypes = ['saldo_awal', 'penyertaan_desa', 'penyertaan_lain', 'hibah', 'pinjaman', 'setoran_unit'];
+            const isIncome = incomeTypes.includes(jenis);
+            
+            const transactionData = {
+                type: 'kas_umum',
+                tanggal: document.getElementById('kasTanggal').value,
+                jenis: jenis,
+                jumlah: jumlah,
+                isIncome: isIncome,
+                sumber: document.getElementById('kasSumber').value,
+                keterangan: document.getElementById('kasKeterangan').value,
+                bukti: document.getElementById('kasBukti').value,
+                saldoSebelum: kasUmumSaldo,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Update balance
+            if (isIncome) {
+                kasUmumSaldo += jumlah;
+            } else {
+                kasUmumSaldo -= jumlah;
+            }
+            
+            transactionData.saldoSesudah = kasUmumSaldo;
+            
+            // Save transaction
+            kasUmumTransactions.push(transactionData);
+            localStorage.setItem('bumdesKasUmumTransactions', JSON.stringify(kasUmumTransactions));
+            localStorage.setItem('bumdesKasUmumSaldo', JSON.stringify(kasUmumSaldo));
+            
+            // Update consolidated assets
+            consolidatedAssets.kas = kasUmumSaldo;
+            localStorage.setItem('bumdesConsolidatedAssets', JSON.stringify(consolidatedAssets));
+            
+            // Update display
+            setupKasUmumDisplay();
+            updateConsolidatedReports();
+            
+            const jenisText = {
+                'saldo_awal': 'Saldo Awal',
+                'penyertaan_desa': 'Penyertaan Modal Desa',
+                'penyertaan_lain': 'Penyertaan Modal Lainnya',
+                'hibah': 'Hibah/Bantuan',
+                'pinjaman': 'Pinjaman',
+                'setoran_unit': 'Setoran dari Unit Usaha',
+                'pengeluaran_operasional': 'Pengeluaran Operasional',
+                'investasi': 'Investasi/Pembelian Aset',
+                'pembayaran_hutang': 'Pembayaran Hutang',
+                'setor_pades': 'Setor PADes ke Desa'
+            };
+            
+            alert(`✅ Transaksi Kas Umum berhasil disimpan!\n\n` +
+                  `📅 Tanggal: ${transactionData.tanggal}\n` +
+                  `📊 Jenis: ${jenisText[jenis]}\n` +
+                  `💰 Jumlah: ${formatCurrency(jumlah)} (${isIncome ? 'Masuk' : 'Keluar'})\n` +
+                  `🏦 Saldo Baru: ${formatCurrency(kasUmumSaldo)}\n` +
+                  `📝 Keterangan: ${transactionData.keterangan}`);
+            
+            resetKasUmumForm();
+        }
+
+        // Reset Kas Umum Form
+        function resetKasUmumForm() {
+            document.getElementById('kasUmumForm').reset();
+            document.getElementById('kasTanggal').value = new Date().toISOString().split('T')[0];
+        }
+
+        // Load Kas Umum History
+        function loadKasUmumHistory() {
+            filterKasHistory();
+        }
+
+        // Filter Kas History
+        function filterKasHistory() {
+            const filter = document.getElementById('kasFilter').value;
+            const historyList = document.getElementById('kasHistoryList');
+            
+            let filteredTransactions = kasUmumTransactions;
+            
+            if (filter === 'masuk') {
+                filteredTransactions = kasUmumTransactions.filter(t => t.isIncome);
+            } else if (filter === 'keluar') {
+                filteredTransactions = kasUmumTransactions.filter(t => !t.isIncome);
+            }
+            
+            // Sort by date (newest first)
+            filteredTransactions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            if (filteredTransactions.length === 0) {
+                historyList.innerHTML = '<p class="text-gray-500 text-center py-4">Belum ada transaksi</p>';
+                return;
+            }
+            
+            const jenisText = {
+                'saldo_awal': 'Saldo Awal',
+                'penyertaan_desa': 'Penyertaan Modal Desa',
+                'penyertaan_lain': 'Penyertaan Modal Lainnya',
+                'hibah': 'Hibah/Bantuan',
+                'pinjaman': 'Pinjaman',
+                'setoran_unit': 'Setoran dari Unit Usaha',
+                'pengeluaran_operasional': 'Pengeluaran Operasional',
+                'investasi': 'Investasi/Pembelian Aset',
+                'pembayaran_hutang': 'Pembayaran Hutang',
+                'setor_pades': 'Setor PADes ke Desa'
+            };
+            
+            let html = '';
+            filteredTransactions.forEach(transaction => {
+                const date = new Date(transaction.timestamp).toLocaleDateString('id-ID');
+                const colorClass = transaction.isIncome ? 'border-l-green-500 bg-green-50' : 'border-l-red-500 bg-red-50';
+                const iconClass = transaction.isIncome ? '💰' : '💸';
+                
+                html += `
+                    <div class="border-l-4 ${colorClass} p-3 rounded">
+                        <div class="flex justify-between items-start mb-1">
+                            <div class="flex items-center gap-2">
+                                <span>${iconClass}</span>
+                                <span class="font-medium text-sm">${jenisText[transaction.jenis]}</span>
+                            </div>
+                            <span class="text-xs text-gray-500">${date}</span>
+                        </div>
+                        <div class="text-sm space-y-1">
+                            <div class="flex justify-between">
+                                <span>Jumlah:</span>
+                                <span class="font-semibold ${transaction.isIncome ? 'text-green-600' : 'text-red-600'}">
+                                    ${transaction.isIncome ? '+' : '-'}${formatCurrency(transaction.jumlah)}
+                                </span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Saldo:</span>
+                                <span class="font-semibold">${formatCurrency(transaction.saldoSesudah)}</span>
+                            </div>
+                            ${transaction.sumber ? `<div><span class="text-gray-600">Sumber/Tujuan:</span> ${transaction.sumber}</div>` : ''}
+                            ${transaction.keterangan ? `<div><span class="text-gray-600">Keterangan:</span> ${transaction.keterangan}</div>` : ''}
+                            ${transaction.bukti ? `<div><span class="text-gray-600">No. Bukti:</span> ${transaction.bukti}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            historyList.innerHTML = html;
+        }
+
+        // Initialize system on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update consolidated reports from existing data
+            updateConsolidatedReports();
+            
+            // Initialize chart
+            setTimeout(initChart, 500);
+            
+            // Show login modal
+            document.getElementById('loginModal').style.display = 'flex';
+            document.getElementById('mainContent').style.display = 'none';
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97028874d12fe78d',t:'MTc1NTM2NDEwMC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
