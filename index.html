@@ -73,6 +73,12 @@
                     <p class="text-xs text-gray-600">Data unit usaha BUMDes</p>
                 </button>
                 
+                <button onclick="showForm('laporanUnit')" class="bg-orange-50 hover:bg-orange-100 p-4 rounded-lg text-left transition-colors border hover:border-orange-200">
+                    <div class="text-2xl mb-2">📊</div>
+                    <h3 class="font-semibold text-gray-800 text-sm">Laporan per Unit</h3>
+                    <p class="text-xs text-gray-600">Laporan keuangan masing-masing unit</p>
+                </button>
+                
                 <button onclick="showForm('sdm')" class="bg-yellow-50 hover:bg-yellow-100 p-4 rounded-lg text-left transition-colors border hover:border-yellow-200">
                     <div class="text-2xl mb-2">👥</div>
                     <h3 class="font-semibold text-gray-800 text-sm">SDM & Kepengurusan</h3>
@@ -544,6 +550,189 @@
                             </button>
                         </div>
                     </form>
+                </div>
+            </div>
+
+            <!-- Form Laporan per Unit -->
+            <div id="laporanUnit" class="form-section hidden">
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-6">📊 Laporan Keuangan per Unit Usaha</h3>
+                    
+                    <!-- Unit Selector -->
+                    <div class="bg-blue-50 p-4 rounded-lg mb-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="text-lg font-bold text-blue-800">Pilih Unit Usaha</h4>
+                            <button type="button" onclick="refreshUnitList()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">
+                                🔄 Refresh Daftar Unit
+                            </button>
+                        </div>
+                        <select id="selectedUnit" onchange="loadUnitReport()" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                            <option value="">-- Pilih Unit Usaha --</option>
+                        </select>
+                    </div>
+
+                    <!-- Unit Report Form -->
+                    <div id="unitReportForm" class="hidden">
+                        <form onsubmit="saveUnitReport(event)" class="space-y-6">
+                            <!-- Info Unit -->
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="text-lg font-bold text-gray-800 mb-3">ℹ️ Informasi Unit</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Nama Unit</label>
+                                        <input type="text" id="unitNama" readonly class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-100">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Jenis Usaha</label>
+                                        <input type="text" id="unitJenis" readonly class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-100">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Periode Laporan</label>
+                                        <input type="month" id="periodeUnit" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pendapatan Unit -->
+                            <div class="bg-green-50 p-6 rounded-lg">
+                                <h4 class="text-lg font-bold text-green-800 mb-4">💰 Pendapatan Unit</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Penjualan/Omzet (Rp)</label>
+                                        <input type="number" id="unitPenjualan" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500" required>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Pendapatan Jasa (Rp)</label>
+                                        <input type="number" id="unitPendapatanJasa" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Pendapatan Lain-lain (Rp)</label>
+                                        <input type="number" id="unitPendapatanLain" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Total Pendapatan (Rp)</label>
+                                        <input type="number" id="unitTotalPendapatan" readonly class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-100 font-bold">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Biaya Unit -->
+                            <div class="bg-red-50 p-6 rounded-lg">
+                                <h4 class="text-lg font-bold text-red-800 mb-4">💸 Biaya Operasional Unit</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Harga Pokok Penjualan (Rp)</label>
+                                        <input type="number" id="unitHPP" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500" required>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Biaya Gaji Karyawan (Rp)</label>
+                                        <input type="number" id="unitBiayaGaji" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500" required>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Biaya Operasional (Rp)</label>
+                                        <input type="number" id="unitBiayaOp" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500" required>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Biaya Administrasi (Rp)</label>
+                                        <input type="number" id="unitBiayaAdmin" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500" required>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Biaya Pemasaran (Rp)</label>
+                                        <input type="number" id="unitBiayaPemasaran" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Total Biaya (Rp)</label>
+                                        <input type="number" id="unitTotalBiaya" readonly class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-100 font-bold">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Laba Rugi Unit -->
+                            <div class="bg-blue-50 p-6 rounded-lg">
+                                <h4 class="text-lg font-bold text-blue-800 mb-4">📈 Laba Rugi Unit</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div class="bg-white p-4 rounded-lg text-center">
+                                        <h5 class="font-semibold text-gray-700 mb-2">Laba Kotor</h5>
+                                        <div class="text-2xl font-bold text-green-600" id="unitLabaKotor">Rp 0</div>
+                                    </div>
+                                    <div class="bg-white p-4 rounded-lg text-center">
+                                        <h5 class="font-semibold text-gray-700 mb-2">Laba Operasional</h5>
+                                        <div class="text-2xl font-bold text-blue-600" id="unitLabaOp">Rp 0</div>
+                                    </div>
+                                    <div class="bg-white p-4 rounded-lg text-center">
+                                        <h5 class="font-semibold text-gray-700 mb-2">Laba Bersih</h5>
+                                        <div class="text-2xl font-bold text-purple-600" id="unitLabaBersih">Rp 0</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Aset Unit -->
+                            <div class="bg-yellow-50 p-6 rounded-lg">
+                                <h4 class="text-lg font-bold text-yellow-800 mb-4">🏦 Aset Unit</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Kas Unit (Rp)</label>
+                                        <input type="number" id="unitKas" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500" required>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Piutang Unit (Rp)</label>
+                                        <input type="number" id="unitPiutang" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Persediaan Unit (Rp)</label>
+                                        <input type="number" id="unitPersediaan" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Aset Tetap Unit (Rp)</label>
+                                        <input type="number" id="unitAsetTetap" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Catatan -->
+                            <div class="bg-purple-50 p-6 rounded-lg">
+                                <h4 class="text-lg font-bold text-purple-800 mb-4">📝 Catatan & Analisis</h4>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Catatan Kinerja Unit</label>
+                                        <textarea id="unitCatatan" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500" placeholder="Masukkan catatan tentang kinerja unit usaha ini..."></textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Rencana Pengembangan</label>
+                                        <textarea id="unitRencana" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500" placeholder="Rencana pengembangan unit usaha ke depan..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex space-x-4">
+                                <button type="button" onclick="hitungLabaUnit()" class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-2 rounded-lg">
+                                    🧮 Hitung Otomatis
+                                </button>
+                                <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg">
+                                    💾 Simpan Laporan Unit
+                                </button>
+                                <button type="button" onclick="exportUnitReport()" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg">
+                                    📊 Export Laporan Unit
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Daftar Laporan Unit -->
+                    <div class="bg-gray-50 p-6 rounded-lg mt-6">
+                        <h4 class="text-xl font-bold text-gray-800 mb-4">📋 Daftar Laporan Unit yang Tersimpan</h4>
+                        <div id="unitReportsList">
+                            <p class="text-gray-600 text-center py-4">Belum ada laporan unit yang tersimpan</p>
+                        </div>
+                        <div class="mt-4 flex space-x-4">
+                            <button onclick="exportAllUnitReports()" class="bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-2 rounded-lg">
+                                📊 Export Semua Laporan Unit
+                            </button>
+                            <button onclick="generateConsolidatedReport()" class="bg-teal-500 hover:bg-teal-600 text-white px-6 py-2 rounded-lg">
+                                📈 Laporan Konsolidasi
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -1377,6 +1566,404 @@
             alert('🏛️ Laporan format Kementerian Desa berhasil di-export!');
         }
 
+        // Unit reporting functions
+        function refreshUnitList() {
+            const unitSelect = document.getElementById('selectedUnit');
+            const units = reportData.unitUsaha || [];
+            
+            // Clear existing options
+            unitSelect.innerHTML = '<option value="">-- Pilih Unit Usaha --</option>';
+            
+            // Add units
+            units.forEach((unit, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = unit.namaUnit || `Unit ${index + 1}`;
+                unitSelect.appendChild(option);
+            });
+            
+            // Update unit reports list
+            updateUnitReportsList();
+            
+            alert('🔄 Daftar unit usaha berhasil di-refresh!');
+        }
+
+        function loadUnitReport() {
+            const selectedIndex = document.getElementById('selectedUnit').value;
+            const unitForm = document.getElementById('unitReportForm');
+            
+            if (selectedIndex === '') {
+                unitForm.classList.add('hidden');
+                return;
+            }
+            
+            const units = reportData.unitUsaha || [];
+            const selectedUnit = units[selectedIndex];
+            
+            if (selectedUnit) {
+                // Show form
+                unitForm.classList.remove('hidden');
+                
+                // Fill unit info
+                document.getElementById('unitNama').value = selectedUnit.namaUnit || '';
+                document.getElementById('unitJenis').value = selectedUnit.jenisUsaha || '';
+                
+                // Set current month as default
+                const currentDate = new Date();
+                const currentMonth = currentDate.toISOString().slice(0, 7);
+                document.getElementById('periodeUnit').value = currentMonth;
+                
+                // Load existing report if available
+                const unitReports = reportData.unitReports || {};
+                const reportKey = `${selectedIndex}_${currentMonth}`;
+                const existingReport = unitReports[reportKey];
+                
+                if (existingReport) {
+                    // Fill form with existing data
+                    document.getElementById('unitPenjualan').value = existingReport.penjualan || '';
+                    document.getElementById('unitPendapatanJasa').value = existingReport.pendapatanJasa || '';
+                    document.getElementById('unitPendapatanLain').value = existingReport.pendapatanLain || '';
+                    document.getElementById('unitHPP').value = existingReport.hpp || '';
+                    document.getElementById('unitBiayaGaji').value = existingReport.biayaGaji || '';
+                    document.getElementById('unitBiayaOp').value = existingReport.biayaOp || '';
+                    document.getElementById('unitBiayaAdmin').value = existingReport.biayaAdmin || '';
+                    document.getElementById('unitBiayaPemasaran').value = existingReport.biayaPemasaran || '';
+                    document.getElementById('unitKas').value = existingReport.kas || '';
+                    document.getElementById('unitPiutang').value = existingReport.piutang || '';
+                    document.getElementById('unitPersediaan').value = existingReport.persediaan || '';
+                    document.getElementById('unitAsetTetap').value = existingReport.asetTetap || '';
+                    document.getElementById('unitCatatan').value = existingReport.catatan || '';
+                    document.getElementById('unitRencana').value = existingReport.rencana || '';
+                    
+                    // Calculate automatically
+                    hitungLabaUnit();
+                } else {
+                    // Clear form for new report
+                    clearUnitForm();
+                }
+            }
+        }
+
+        function clearUnitForm() {
+            const inputs = ['unitPenjualan', 'unitPendapatanJasa', 'unitPendapatanLain', 'unitHPP', 
+                           'unitBiayaGaji', 'unitBiayaOp', 'unitBiayaAdmin', 'unitBiayaPemasaran',
+                           'unitKas', 'unitPiutang', 'unitPersediaan', 'unitAsetTetap', 
+                           'unitCatatan', 'unitRencana'];
+            
+            inputs.forEach(id => {
+                document.getElementById(id).value = '';
+            });
+            
+            // Reset calculated fields
+            document.getElementById('unitTotalPendapatan').value = '';
+            document.getElementById('unitTotalBiaya').value = '';
+            document.getElementById('unitLabaKotor').textContent = 'Rp 0';
+            document.getElementById('unitLabaOp').textContent = 'Rp 0';
+            document.getElementById('unitLabaBersih').textContent = 'Rp 0';
+        }
+
+        function hitungLabaUnit() {
+            const penjualan = parseInt(document.getElementById('unitPenjualan').value) || 0;
+            const pendapatanJasa = parseInt(document.getElementById('unitPendapatanJasa').value) || 0;
+            const pendapatanLain = parseInt(document.getElementById('unitPendapatanLain').value) || 0;
+            const hpp = parseInt(document.getElementById('unitHPP').value) || 0;
+            const biayaGaji = parseInt(document.getElementById('unitBiayaGaji').value) || 0;
+            const biayaOp = parseInt(document.getElementById('unitBiayaOp').value) || 0;
+            const biayaAdmin = parseInt(document.getElementById('unitBiayaAdmin').value) || 0;
+            const biayaPemasaran = parseInt(document.getElementById('unitBiayaPemasaran').value) || 0;
+            
+            const totalPendapatan = penjualan + pendapatanJasa + pendapatanLain;
+            const totalBiaya = hpp + biayaGaji + biayaOp + biayaAdmin + biayaPemasaran;
+            const labaKotor = penjualan - hpp;
+            const labaOp = totalPendapatan - hpp - biayaOp - biayaAdmin - biayaPemasaran;
+            const labaBersih = totalPendapatan - totalBiaya;
+            
+            // Update display
+            document.getElementById('unitTotalPendapatan').value = totalPendapatan;
+            document.getElementById('unitTotalBiaya').value = totalBiaya;
+            document.getElementById('unitLabaKotor').textContent = 'Rp ' + labaKotor.toLocaleString('id-ID');
+            document.getElementById('unitLabaOp').textContent = 'Rp ' + labaOp.toLocaleString('id-ID');
+            document.getElementById('unitLabaBersih').textContent = 'Rp ' + labaBersih.toLocaleString('id-ID');
+        }
+
+        function saveUnitReport(event) {
+            event.preventDefault();
+            
+            const selectedIndex = document.getElementById('selectedUnit').value;
+            const periode = document.getElementById('periodeUnit').value;
+            
+            if (!selectedIndex || !periode) {
+                alert('❌ Pilih unit usaha dan periode terlebih dahulu!');
+                return;
+            }
+            
+            const reportData_local = {
+                unitIndex: selectedIndex,
+                unitNama: document.getElementById('unitNama').value,
+                unitJenis: document.getElementById('unitJenis').value,
+                periode: periode,
+                penjualan: document.getElementById('unitPenjualan').value,
+                pendapatanJasa: document.getElementById('unitPendapatanJasa').value,
+                pendapatanLain: document.getElementById('unitPendapatanLain').value,
+                hpp: document.getElementById('unitHPP').value,
+                biayaGaji: document.getElementById('unitBiayaGaji').value,
+                biayaOp: document.getElementById('unitBiayaOp').value,
+                biayaAdmin: document.getElementById('unitBiayaAdmin').value,
+                biayaPemasaran: document.getElementById('unitBiayaPemasaran').value,
+                kas: document.getElementById('unitKas').value,
+                piutang: document.getElementById('unitPiutang').value,
+                persediaan: document.getElementById('unitPersediaan').value,
+                asetTetap: document.getElementById('unitAsetTetap').value,
+                catatan: document.getElementById('unitCatatan').value,
+                rencana: document.getElementById('unitRencana').value,
+                tanggalInput: new Date().toISOString()
+            };
+            
+            // Initialize unitReports if not exists
+            if (!reportData.unitReports) {
+                reportData.unitReports = {};
+            }
+            
+            // Save report with unique key
+            const reportKey = `${selectedIndex}_${periode}`;
+            reportData.unitReports[reportKey] = reportData_local;
+            
+            // Save to localStorage
+            localStorage.setItem('bumdesKemendesReports', JSON.stringify(reportData));
+            
+            // Update reports list
+            updateUnitReportsList();
+            
+            alert('💾 Laporan unit usaha berhasil disimpan!');
+        }
+
+        function updateUnitReportsList() {
+            const container = document.getElementById('unitReportsList');
+            const unitReports = reportData.unitReports || {};
+            
+            if (Object.keys(unitReports).length === 0) {
+                container.innerHTML = '<p class="text-gray-600 text-center py-4">Belum ada laporan unit yang tersimpan</p>';
+                return;
+            }
+            
+            let html = '<div class="space-y-3">';
+            
+            Object.entries(unitReports).forEach(([key, report]) => {
+                const totalPendapatan = (parseInt(report.penjualan || 0) + parseInt(report.pendapatanJasa || 0) + parseInt(report.pendapatanLain || 0));
+                const totalBiaya = (parseInt(report.hpp || 0) + parseInt(report.biayaGaji || 0) + parseInt(report.biayaOp || 0) + parseInt(report.biayaAdmin || 0) + parseInt(report.biayaPemasaran || 0));
+                const labaBersih = totalPendapatan - totalBiaya;
+                
+                html += `
+                    <div class="bg-white p-4 rounded-lg border">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h5 class="font-semibold text-gray-800">${report.unitNama}</h5>
+                                <p class="text-sm text-gray-600">Periode: ${report.periode}</p>
+                                <p class="text-sm text-gray-600">Jenis: ${report.unitJenis}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-600">Laba Bersih</p>
+                                <p class="font-bold ${labaBersih >= 0 ? 'text-green-600' : 'text-red-600'}">
+                                    Rp ${labaBersih.toLocaleString('id-ID')}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex space-x-2">
+                            <button onclick="editUnitReport('${key}')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
+                                ✏️ Edit
+                            </button>
+                            <button onclick="deleteUnitReport('${key}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">
+                                🗑️ Hapus
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function editUnitReport(reportKey) {
+            const unitReports = reportData.unitReports || {};
+            const report = unitReports[reportKey];
+            
+            if (!report) return;
+            
+            // Set unit selector
+            document.getElementById('selectedUnit').value = report.unitIndex;
+            
+            // Load the report
+            loadUnitReport();
+            
+            // Scroll to form
+            document.getElementById('unitReportForm').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function deleteUnitReport(reportKey) {
+            if (confirm('❓ Apakah Anda yakin ingin menghapus laporan ini?')) {
+                delete reportData.unitReports[reportKey];
+                localStorage.setItem('bumdesKemendesReports', JSON.stringify(reportData));
+                updateUnitReportsList();
+                alert('🗑️ Laporan berhasil dihapus!');
+            }
+        }
+
+        function exportUnitReport() {
+            const selectedIndex = document.getElementById('selectedUnit').value;
+            const periode = document.getElementById('periodeUnit').value;
+            
+            if (!selectedIndex || !periode) {
+                alert('❌ Pilih unit usaha dan periode terlebih dahulu!');
+                return;
+            }
+            
+            const reportKey = `${selectedIndex}_${periode}`;
+            const unitReports = reportData.unitReports || {};
+            const report = unitReports[reportKey];
+            
+            if (!report) {
+                alert('❌ Laporan belum disimpan!');
+                return;
+            }
+            
+            const ws_data = [
+                ['LAPORAN KEUANGAN UNIT USAHA - KEMENTERIAN DESA PDTT'],
+                ['Nama Unit', report.unitNama],
+                ['Jenis Usaha', report.unitJenis],
+                ['Periode', report.periode],
+                ['Tanggal Export', new Date().toLocaleDateString('id-ID')],
+                [''],
+                ['PENDAPATAN'],
+                ['Penjualan/Omzet (Rp)', report.penjualan || 0],
+                ['Pendapatan Jasa (Rp)', report.pendapatanJasa || 0],
+                ['Pendapatan Lain-lain (Rp)', report.pendapatanLain || 0],
+                ['Total Pendapatan (Rp)', (parseInt(report.penjualan || 0) + parseInt(report.pendapatanJasa || 0) + parseInt(report.pendapatanLain || 0))],
+                [''],
+                ['BIAYA'],
+                ['Harga Pokok Penjualan (Rp)', report.hpp || 0],
+                ['Biaya Gaji Karyawan (Rp)', report.biayaGaji || 0],
+                ['Biaya Operasional (Rp)', report.biayaOp || 0],
+                ['Biaya Administrasi (Rp)', report.biayaAdmin || 0],
+                ['Biaya Pemasaran (Rp)', report.biayaPemasaran || 0],
+                ['Total Biaya (Rp)', (parseInt(report.hpp || 0) + parseInt(report.biayaGaji || 0) + parseInt(report.biayaOp || 0) + parseInt(report.biayaAdmin || 0) + parseInt(report.biayaPemasaran || 0))],
+                [''],
+                ['LABA RUGI'],
+                ['Laba Kotor (Rp)', (parseInt(report.penjualan || 0) - parseInt(report.hpp || 0))],
+                ['Laba Bersih (Rp)', ((parseInt(report.penjualan || 0) + parseInt(report.pendapatanJasa || 0) + parseInt(report.pendapatanLain || 0)) - (parseInt(report.hpp || 0) + parseInt(report.biayaGaji || 0) + parseInt(report.biayaOp || 0) + parseInt(report.biayaAdmin || 0) + parseInt(report.biayaPemasaran || 0)))],
+                [''],
+                ['ASET UNIT'],
+                ['Kas Unit (Rp)', report.kas || 0],
+                ['Piutang Unit (Rp)', report.piutang || 0],
+                ['Persediaan Unit (Rp)', report.persediaan || 0],
+                ['Aset Tetap Unit (Rp)', report.asetTetap || 0],
+                [''],
+                ['CATATAN'],
+                ['Catatan Kinerja', report.catatan || ''],
+                ['Rencana Pengembangan', report.rencana || '']
+            ];
+            
+            const ws = XLSX.utils.aoa_to_sheet(ws_data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Laporan Unit');
+            XLSX.writeFile(wb, `Laporan_${report.unitNama}_${report.periode}.xlsx`);
+            
+            alert('📊 Laporan unit berhasil di-export!');
+        }
+
+        function exportAllUnitReports() {
+            const unitReports = reportData.unitReports || {};
+            
+            if (Object.keys(unitReports).length === 0) {
+                alert('❌ Belum ada laporan unit yang tersimpan!');
+                return;
+            }
+            
+            const wb = XLSX.utils.book_new();
+            
+            // Summary sheet
+            const summaryData = [
+                ['RINGKASAN LAPORAN SEMUA UNIT USAHA'],
+                ['Tanggal Export', new Date().toLocaleDateString('id-ID')],
+                [''],
+                ['Unit', 'Periode', 'Total Pendapatan', 'Total Biaya', 'Laba Bersih']
+            ];
+            
+            Object.entries(unitReports).forEach(([key, report]) => {
+                const totalPendapatan = (parseInt(report.penjualan || 0) + parseInt(report.pendapatanJasa || 0) + parseInt(report.pendapatanLain || 0));
+                const totalBiaya = (parseInt(report.hpp || 0) + parseInt(report.biayaGaji || 0) + parseInt(report.biayaOp || 0) + parseInt(report.biayaAdmin || 0) + parseInt(report.biayaPemasaran || 0));
+                const labaBersih = totalPendapatan - totalBiaya;
+                
+                summaryData.push([
+                    report.unitNama,
+                    report.periode,
+                    totalPendapatan,
+                    totalBiaya,
+                    labaBersih
+                ]);
+            });
+            
+            const summaryWs = XLSX.utils.aoa_to_sheet(summaryData);
+            XLSX.utils.book_append_sheet(wb, summaryWs, 'Ringkasan');
+            
+            XLSX.writeFile(wb, 'Laporan_Semua_Unit_' + new Date().toISOString().split('T')[0] + '.xlsx');
+            alert('📊 Semua laporan unit berhasil di-export!');
+        }
+
+        function generateConsolidatedReport() {
+            const unitReports = reportData.unitReports || {};
+            
+            if (Object.keys(unitReports).length === 0) {
+                alert('❌ Belum ada laporan unit yang tersimpan!');
+                return;
+            }
+            
+            let totalPendapatanAll = 0;
+            let totalBiayaAll = 0;
+            let totalLabaAll = 0;
+            
+            const ws_data = [
+                ['LAPORAN KONSOLIDASI SEMUA UNIT USAHA'],
+                ['BUMDes Cikahuripan Makmur Mandiri Sejahtera Cikahuripan'],
+                ['Tanggal Export', new Date().toLocaleDateString('id-ID')],
+                [''],
+                ['DETAIL PER UNIT']
+            ];
+            
+            Object.entries(unitReports).forEach(([key, report]) => {
+                const totalPendapatan = (parseInt(report.penjualan || 0) + parseInt(report.pendapatanJasa || 0) + parseInt(report.pendapatanLain || 0));
+                const totalBiaya = (parseInt(report.hpp || 0) + parseInt(report.biayaGaji || 0) + parseInt(report.biayaOp || 0) + parseInt(report.biayaAdmin || 0) + parseInt(report.biayaPemasaran || 0));
+                const labaBersih = totalPendapatan - totalBiaya;
+                
+                totalPendapatanAll += totalPendapatan;
+                totalBiayaAll += totalBiaya;
+                totalLabaAll += labaBersih;
+                
+                ws_data.push(
+                    [''],
+                    [`Unit: ${report.unitNama} (${report.periode})`],
+                    ['Total Pendapatan (Rp)', totalPendapatan],
+                    ['Total Biaya (Rp)', totalBiaya],
+                    ['Laba Bersih (Rp)', labaBersih]
+                );
+            });
+            
+            ws_data.push(
+                [''],
+                ['TOTAL KONSOLIDASI'],
+                ['Total Pendapatan Semua Unit (Rp)', totalPendapatanAll],
+                ['Total Biaya Semua Unit (Rp)', totalBiayaAll],
+                ['Total Laba Bersih Semua Unit (Rp)', totalLabaAll]
+            );
+            
+            const ws = XLSX.utils.aoa_to_sheet(ws_data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Konsolidasi');
+            XLSX.writeFile(wb, 'Laporan_Konsolidasi_' + new Date().toISOString().split('T')[0] + '.xlsx');
+            
+            alert('📈 Laporan konsolidasi berhasil dibuat!');
+        }
+
         function validateAllData() {
             const validationResults = document.getElementById('validationResults');
             let results = [];
@@ -1402,6 +1989,14 @@
                 results.push('<div class="flex items-center"><span class="text-red-600 mr-2">❌</span><span>Data Unit Usaha: Belum Lengkap</span></div>');
             }
             
+            // Validasi Laporan Unit
+            const unitReportsCount = reportData.unitReports ? Object.keys(reportData.unitReports).length : 0;
+            if (unitReportsCount > 0) {
+                results.push('<div class="flex items-center"><span class="text-green-600 mr-2">✅</span><span>Laporan per Unit: ' + unitReportsCount + ' laporan tersimpan</span></div>');
+            } else {
+                results.push('<div class="flex items-center"><span class="text-yellow-600 mr-2">⚠️</span><span>Laporan per Unit: Belum ada laporan</span></div>');
+            }
+            
             // Validasi SDM
             if (reportData.sdm && reportData.sdm.pengurus) {
                 results.push('<div class="flex items-center"><span class="text-green-600 mr-2">✅</span><span>Data SDM: Lengkap</span></div>');
@@ -1421,5 +2016,5 @@
             alert('🔍 Validasi data selesai! Periksa hasil di bawah.');
         }
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'976cc97ea6abce71',t:'MTc1NjQ3ODI1NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'976cdcfdf216f8c4',t:'MTc1NjQ3OTA1Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
