@@ -78,7 +78,12 @@
                     Login
                 </button>
             </form>
-            <div class="mt-4 text-sm text-gray-600">
+            <div class="mt-4 text-sm text-gray-600 text-center">
+                <p class="text-gray-500">Masukkan username dan password yang valid</p>
+            </div>
+            
+            <!-- Demo Akun - Hanya tampil untuk admin/direktur -->
+            <div id="demoAccounts" class="mt-4 text-sm text-gray-600 hidden">
                 <p><strong>✅ Demo Akun yang Tersedia:</strong></p>
                 <div class="bg-gray-50 p-3 rounded-lg mt-2 space-y-1">
                     <p><strong>Direktur:</strong> direktur / admin123</p>
@@ -102,9 +107,14 @@
                 <p class="text-sm text-gray-600">Login sebagai:</p>
                 <p class="font-semibold text-gray-800" id="userInfo"></p>
             </div>
-            <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm transition-colors">
-                🚪 Logout
-            </button>
+            <div class="flex space-x-2">
+                <button onclick="showDemoAccounts()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm transition-colors" id="demoBtn" style="display: none;">
+                    📋 Demo Akun
+                </button>
+                <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                    🚪 Logout
+                </button>
+            </div>
         </div>
 
         <!-- Navigation Menu -->
@@ -662,10 +672,16 @@
                 const loginModal = document.getElementById('loginModal');
                 const mainContent = document.getElementById('mainContent');
                 const userInfo = document.getElementById('userInfo');
+                const demoBtn = document.getElementById('demoBtn');
                 
                 if (loginModal) loginModal.style.display = 'none';
                 if (mainContent) mainContent.style.display = 'block';
                 if (userInfo) userInfo.textContent = currentUser.name;
+                
+                // Tampilkan tombol demo akun hanya untuk direktur
+                if (currentUser.role === 'direktur' && demoBtn) {
+                    demoBtn.style.display = 'block';
+                }
                 
                 // Setup navigasi dan tampilkan dashboard
                 setupNavigation();
@@ -678,16 +694,17 @@
                 
             } else {
                 console.log('❌ Login gagal untuk:', username);
-                alert('❌ Username atau password salah!\n\n📋 Akun yang tersedia:\n\n' +
-                      '👨‍💼 Direktur: direktur / admin123\n' +
-                      '🌐 Internet: internet / unit123\n' +
-                      '🏪 Toko: toko / unit123\n' +
-                      '🏬 Kios: kios / unit123\n' +
-                      '🛒 Lapak: lapak / unit123\n' +
-                      '⚽ Lapangan: lapangan / unit123\n' +
-                      '♻️ Sampah: sampah / unit123\n' +
-                      '🐔 Ayam: ayam / unit123\n\n' +
-                      '⚠️ Pastikan huruf kecil semua!');
+                alert('❌ Username atau password salah!\n\nSilakan hubungi administrator untuk mendapatkan akses login.');
+            }
+        }
+
+        // Show demo accounts - hanya untuk direktur
+        function showDemoAccounts() {
+            const demoAccounts = document.getElementById('demoAccounts');
+            if (demoAccounts.classList.contains('hidden')) {
+                demoAccounts.classList.remove('hidden');
+            } else {
+                demoAccounts.classList.add('hidden');
             }
         }
 
@@ -919,6 +936,295 @@
             `;
         }
 
+        // FIXED: Pengaturan Laporan
+        function showReportSettings() {
+            const adminContent = document.getElementById('adminContentArea');
+            adminContent.innerHTML = `
+                <h4 class="text-xl font-bold mb-4">⚙️ Pengaturan Laporan</h4>
+                <div class="bg-white p-6 rounded-lg">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <h5 class="font-semibold text-blue-800 mb-3">Format Laporan</h5>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-sm font-medium mb-1">Template Laporan:</label>
+                                    <select class="w-full border rounded px-3 py-2">
+                                        <option>Template Standar BUMDes</option>
+                                        <option>Template Kementerian Desa</option>
+                                        <option>Template Custom</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-1">Periode Laporan:</label>
+                                    <select class="w-full border rounded px-3 py-2">
+                                        <option>Bulanan</option>
+                                        <option>Triwulan</option>
+                                        <option>Semester</option>
+                                        <option>Tahunan</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" checked class="mr-2">
+                                        <span class="text-sm">Auto-generate laporan bulanan</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-lg">
+                            <h5 class="font-semibold text-green-800 mb-3">Distribusi Laporan</h5>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-sm font-medium mb-1">Email Penerima:</label>
+                                    <textarea class="w-full border rounded px-3 py-2 h-20" placeholder="direktur@bumdes.com&#10;kepala.desa@cikahuripan.go.id&#10;sekretaris@bumdes.com"></textarea>
+                                </div>
+                                <div>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" checked class="mr-2">
+                                        <span class="text-sm">Kirim otomatis setiap akhir bulan</span>
+                                    </label>
+                                </div>
+                                <div>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" class="mr-2">
+                                        <span class="text-sm">Backup ke cloud storage</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6 bg-yellow-50 p-4 rounded-lg">
+                        <h5 class="font-semibold text-yellow-800 mb-3">Kustomisasi Laporan</h5>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <label class="flex items-center">
+                                <input type="checkbox" checked class="mr-2">
+                                <span class="text-sm">Logo BUMDes</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" checked class="mr-2">
+                                <span class="text-sm">Logo Desa</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" checked class="mr-2">
+                                <span class="text-sm">Grafik Pendapatan</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" class="mr-2">
+                                <span class="text-sm">Analisis Trend</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex space-x-4">
+                        <button onclick="saveReportSettings()" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg">
+                            💾 Simpan Pengaturan
+                        </button>
+                        <button onclick="previewReport()" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg">
+                            👁️ Preview Laporan
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // FIXED: Laporan Per Unit
+        function showUnitReports() {
+            const adminContent = document.getElementById('adminContentArea');
+            adminContent.innerHTML = `
+                <h4 class="text-xl font-bold mb-4">📋 Laporan Per Unit</h4>
+                <div class="bg-white p-6 rounded-lg">
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium mb-2">Pilih Unit Usaha:</label>
+                        <select id="unitSelector" onchange="loadUnitReport()" class="border rounded px-3 py-2 w-full md:w-64">
+                            <option value="">-- Pilih Unit --</option>
+                            <option value="internet">🌐 Unit Internet</option>
+                            <option value="toko">🏪 Unit Toko</option>
+                            <option value="kios">🏬 Unit Kios</option>
+                            <option value="lapak">🛒 Unit Lapak</option>
+                            <option value="lapangan">⚽ Unit Lapangan</option>
+                            <option value="sampah">♻️ Unit Sampah</option>
+                            <option value="ayam">🐔 Unit Ayam</option>
+                        </select>
+                    </div>
+                    
+                    <div id="unitReportContent" class="space-y-6">
+                        <div class="text-center text-gray-500 py-8">
+                            <p>Pilih unit usaha untuk melihat laporan detail</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // FIXED: Kelola Unit Usaha
+        function showUnitManager() {
+            const adminContent = document.getElementById('adminContentArea');
+            adminContent.innerHTML = `
+                <h4 class="text-xl font-bold mb-4">🏢 Kelola Unit Usaha</h4>
+                <div class="bg-white p-6 rounded-lg">
+                    <div class="mb-6">
+                        <button onclick="addNewUnit()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg mr-2">
+                            ➕ Tambah Unit Baru
+                        </button>
+                        <button onclick="exportUnitData()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg">
+                            📊 Export Data Unit
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <div class="flex items-center justify-between mb-3">
+                                <h5 class="font-semibold text-blue-800">🌐 Unit Internet</h5>
+                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">Aktif</span>
+                            </div>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span>Pendapatan:</span>
+                                    <span class="font-semibold">Rp 12.5M</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Pelanggan:</span>
+                                    <span class="font-semibold">245 User</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Manager:</span>
+                                    <span class="font-semibold">Budi Santoso</span>
+                                </div>
+                            </div>
+                            <div class="mt-4 flex space-x-2">
+                                <button onclick="editUnit('internet')" class="bg-blue-500 text-white px-3 py-1 rounded text-xs">Edit</button>
+                                <button onclick="viewUnitDetail('internet')" class="bg-gray-500 text-white px-3 py-1 rounded text-xs">Detail</button>
+                            </div>
+                        </div>
+                        
+                        <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <div class="flex items-center justify-between mb-3">
+                                <h5 class="font-semibold text-green-800">🏪 Unit Toko</h5>
+                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">Aktif</span>
+                            </div>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span>Omzet:</span>
+                                    <span class="font-semibold">Rp 8.75M</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Produk:</span>
+                                    <span class="font-semibold">1,234 Item</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Manager:</span>
+                                    <span class="font-semibold">Siti Aminah</span>
+                                </div>
+                            </div>
+                            <div class="mt-4 flex space-x-2">
+                                <button onclick="editUnit('toko')" class="bg-blue-500 text-white px-3 py-1 rounded text-xs">Edit</button>
+                                <button onclick="viewUnitDetail('toko')" class="bg-gray-500 text-white px-3 py-1 rounded text-xs">Detail</button>
+                            </div>
+                        </div>
+                        
+                        <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <div class="flex items-center justify-between mb-3">
+                                <h5 class="font-semibold text-yellow-800">🐔 Unit Ayam</h5>
+                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">Aktif</span>
+                            </div>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span>Pendapatan:</span>
+                                    <span class="font-semibold">Rp 15.5M</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Populasi:</span>
+                                    <span class="font-semibold">2,500 Ekor</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Manager:</span>
+                                    <span class="font-semibold">Ahmad Yusuf</span>
+                                </div>
+                            </div>
+                            <div class="mt-4 flex space-x-2">
+                                <button onclick="editUnit('ayam')" class="bg-blue-500 text-white px-3 py-1 rounded text-xs">Edit</button>
+                                <button onclick="viewUnitDetail('ayam')" class="bg-gray-500 text-white px-3 py-1 rounded text-xs">Detail</button>
+                            </div>
+                        </div>
+                        
+                        <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <div class="flex items-center justify-between mb-3">
+                                <h5 class="font-semibold text-purple-800">🏬 Unit Kios</h5>
+                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">Aktif</span>
+                            </div>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span>Sewa:</span>
+                                    <span class="font-semibold">Rp 6.0M</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Okupansi:</span>
+                                    <span class="font-semibold">12/15 Unit</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Manager:</span>
+                                    <span class="font-semibold">Rina Sari</span>
+                                </div>
+                            </div>
+                            <div class="mt-4 flex space-x-2">
+                                <button onclick="editUnit('kios')" class="bg-blue-500 text-white px-3 py-1 rounded text-xs">Edit</button>
+                                <button onclick="viewUnitDetail('kios')" class="bg-gray-500 text-white px-3 py-1 rounded text-xs">Detail</button>
+                            </div>
+                        </div>
+                        
+                        <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <div class="flex items-center justify-between mb-3">
+                                <h5 class="font-semibold text-red-800">♻️ Unit Sampah</h5>
+                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">Aktif</span>
+                            </div>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span>Pendapatan:</span>
+                                    <span class="font-semibold">Rp 5.2M</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Sampah:</span>
+                                    <span class="font-semibold">15.5 Ton</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Manager:</span>
+                                    <span class="font-semibold">Joko Widodo</span>
+                                </div>
+                            </div>
+                            <div class="mt-4 flex space-x-2">
+                                <button onclick="editUnit('sampah')" class="bg-blue-500 text-white px-3 py-1 rounded text-xs">Edit</button>
+                                <button onclick="viewUnitDetail('sampah')" class="bg-gray-500 text-white px-3 py-1 rounded text-xs">Detail</button>
+                            </div>
+                        </div>
+                        
+                        <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <div class="flex items-center justify-between mb-3">
+                                <h5 class="font-semibold text-orange-800">⚽ Unit Lapangan</h5>
+                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">Aktif</span>
+                            </div>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span>Sewa:</span>
+                                    <span class="font-semibold">Rp 4.5M</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Booking:</span>
+                                    <span class="font-semibold">180 Jam</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Manager:</span>
+                                    <span class="font-semibold">Dedi Kurnia</span>
+                                </div>
+                            </div>
+                            <div class="mt-4 flex space-x-2">
+                                <button onclick="editUnit('lapangan')" class="bg-blue-500 text-white px-3 py-1 rounded text-xs">Edit</button>
+                                <button onclick="viewUnitDetail('lapangan')" class="bg-gray-500 text-white px-3 py-1 rounded text-xs">Detail</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
         function showSystemMaintenance() {
             const adminContent = document.getElementById('adminContentArea');
             adminContent.innerHTML = `
@@ -961,6 +1267,72 @@
             `;
         }
 
+        // Load Unit Report Function
+        function loadUnitReport() {
+            const selector = document.getElementById('unitSelector');
+            const content = document.getElementById('unitReportContent');
+            const selectedUnit = selector.value;
+            
+            if (!selectedUnit) {
+                content.innerHTML = `
+                    <div class="text-center text-gray-500 py-8">
+                        <p>Pilih unit usaha untuk melihat laporan detail</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const unitData = {
+                'internet': {
+                    name: '🌐 Unit Internet',
+                    revenue: 'Rp 12.500.000',
+                    customers: '245 User',
+                    bandwidth: '78%',
+                    manager: 'Budi Santoso'
+                },
+                'toko': {
+                    name: '🏪 Unit Toko',
+                    revenue: 'Rp 8.750.000',
+                    products: '1,234 Item',
+                    margin: '25%',
+                    manager: 'Siti Aminah'
+                },
+                'ayam': {
+                    name: '🐔 Unit Ayam',
+                    revenue: 'Rp 15.500.000',
+                    population: '2,500 Ekor',
+                    eggs: '1,800/Hari',
+                    manager: 'Ahmad Yusuf'
+                }
+            };
+            
+            const data = unitData[selectedUnit] || unitData['internet'];
+            
+            content.innerHTML = `
+                <div class="bg-blue-50 p-6 rounded-lg">
+                    <h5 class="text-xl font-bold text-blue-800 mb-4">${data.name} - Laporan Detail</h5>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-white p-4 rounded-lg">
+                            <h6 class="font-semibold text-gray-700">Pendapatan</h6>
+                            <p class="text-2xl font-bold text-green-600">${data.revenue}</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg">
+                            <h6 class="font-semibold text-gray-700">Metrik Utama</h6>
+                            <p class="text-2xl font-bold text-blue-600">${data.customers || data.products || data.population}</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg">
+                            <h6 class="font-semibold text-gray-700">Efisiensi</h6>
+                            <p class="text-2xl font-bold text-purple-600">${data.bandwidth || data.margin || data.eggs}</p>
+                        </div>
+                    </div>
+                    <div class="mt-6 bg-white p-4 rounded-lg">
+                        <h6 class="font-semibold text-gray-700 mb-2">Manager Unit</h6>
+                        <p class="text-lg">${data.manager}</p>
+                    </div>
+                </div>
+            `;
+        }
+
         // Admin helper functions
         function addNewUser() {
             alert('🔧 Fitur Tambah User Baru akan segera tersedia!');
@@ -972,6 +1344,30 @@
 
         function saveFinanceData() {
             alert('💾 Data keuangan berhasil disimpan!');
+        }
+
+        function saveReportSettings() {
+            alert('💾 Pengaturan laporan berhasil disimpan!');
+        }
+
+        function previewReport() {
+            alert('👁️ Preview laporan akan segera tersedia!');
+        }
+
+        function addNewUnit() {
+            alert('➕ Fitur Tambah Unit Baru akan segera tersedia!');
+        }
+
+        function exportUnitData() {
+            alert('📊 Export data unit akan segera tersedia!');
+        }
+
+        function editUnit(unit) {
+            alert(`✏️ Edit Unit ${unit} akan segera tersedia!`);
+        }
+
+        function viewUnitDetail(unit) {
+            alert(`👁️ Detail Unit ${unit} akan segera tersedia!`);
         }
 
         function clearCache() {
@@ -988,18 +1384,6 @@
 
         function showUserActivity() {
             alert('📊 Fitur Log Aktivitas User akan segera tersedia!');
-        }
-
-        function showReportSettings() {
-            alert('⚙️ Fitur Pengaturan Laporan akan segera tersedia!');
-        }
-
-        function showUnitManager() {
-            alert('🏢 Fitur Kelola Unit Usaha akan segera tersedia!');
-        }
-
-        function showUnitReports() {
-            alert('📋 Fitur Laporan Per Unit akan segera tersedia!');
         }
 
         function showAnalytics() {
@@ -1033,6 +1417,7 @@
                 document.getElementById('mainContent').style.display = 'none';
                 document.getElementById('username').value = '';
                 document.getElementById('password').value = '';
+                document.getElementById('demoAccounts').classList.add('hidden');
                 
                 // Clear navigation
                 const navigationMenu = document.getElementById('navigationMenu');
@@ -1044,5 +1429,5 @@
             }
         }
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'976c7f79244ffd08',t:'MTc1NjQ3NTIyMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'976c9b71064c273f',t:'MTc1NjQ3NjM2Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
